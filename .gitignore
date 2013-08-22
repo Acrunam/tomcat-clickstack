@@ -1,0 +1,16 @@
+.DS_Store
+.classpath
+.project
+.settings
+*.iml
+.idea
+/lib
+/tomcat8-plugin.zip
+/pkg
+/s3cfg
+target
+
+
+pom.xml
+/clickstack-assembly
+

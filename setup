@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+set -u
+
+/opt/java7/bin/java -jar "$plugin_dir/lib/genapp-setup-tomcat8.jar"
+
