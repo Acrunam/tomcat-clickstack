@@ -62,6 +62,7 @@ public class Setup2 {
 
         this.controlDir = Files.createDirectories(genappDir.resolve("control"));
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
+        Files2.chmodReadWrite(logDir);
 
         this.catalinaHome = Files.createDirectories(appDir.resolve("tomcat8"));
 
@@ -71,6 +72,7 @@ public class Setup2 {
 
 
         this.tmpDir = Files.createDirectories(appDir.resolve("tmp"));
+        Files2.chmodReadWrite(tmpDir);
 
         this.clickstackDir = clickstackDir;
         Preconditions.checkState(Files.exists(clickstackDir) && Files.isDirectory(clickstackDir));
