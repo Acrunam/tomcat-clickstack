@@ -1,4 +1,4 @@
-# Tomcat 7 ClickStack
+# Tomcat 8 ClickStack
 
 To use: 
 
