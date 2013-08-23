@@ -57,9 +57,9 @@ lib/cloudbees-jmx-invoker.jar: lib
 	curl -fLo lib/cloudbees-jmx-invoker-$(jmx_invoker_ver)-jar-with-dependencies.jar "$(jmx_invoker_src)"
 	$(call check-md5,lib/cloudbees-jmx-invoker-$(jmx_invoker_ver)-jar-with-dependencies.jar,$(jmx_invoker_md5))
 
-cloudbees_web_container_extras_ver = 1.0.0
+cloudbees_web_container_extras_ver = 1.0.1
 cloudbees_web_container_extras_src = http://repo1.maven.org/maven2/com/cloudbees/cloudbees-web-container-extras/$(cloudbees_web_container_extras_ver)/cloudbees-web-container-extras-$(cloudbees_web_container_extras_ver).jar
-cloudbees_web_container_extras_md5 = 6757957008d09050f3e4352a827d876c
+cloudbees_web_container_extras_md5 = c63a49c5a8071a0616c6696c3e6ed32a
 
 lib/cloudbees-web-container-extras.jar: lib
 	mkdir -p lib
