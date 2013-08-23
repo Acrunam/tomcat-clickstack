@@ -42,6 +42,7 @@ public class Setup {
             setup2.writeJavaOpts(metadata);
             setup2.writeConfig(metadata, appPort);
             setup2.installControlScripts();
+            setup2.installTomcatJavaOpts();
         }
 
         {

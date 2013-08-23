@@ -81,6 +81,19 @@ public class Setup2 {
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
     }
 
+    public void installTomcatJavaOpts() throws IOException {
+        Path optsFile = controlDir.resolve("java-opts-20-tomcat-opts");
+
+        String opts = "" +
+                "-Djava.io.tmpdir=\"" + tmpDir + "\" " +
+                "-Dcatalina.home=\"" + catalinaHome + "\" " +
+                "-Dcatalina.base=\"" + catalinaBase + "\" " +
+                "-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager " +
+                "-Djava.util.logging.config.file=\"" + catalinaBase + "/conf/logging.properties\"";
+
+        Files.write(optsFile, Collections.singleton(opts), Charsets.UTF_8);
+    }
+
     public void installCatalinaHome() throws Exception {
 
         // echo "Installing tomcat8"
@@ -200,7 +213,7 @@ public class Setup2 {
     }
 
     public Path findJavaHome(Metadata metadata) {
-        String javaVersion = metadata.getRuntimeParameter("javaHome", "version", DEFAULT_JAVA_VERSION);
+        String javaVersion = metadata.getRuntimeParameter("java", "version", DEFAULT_JAVA_VERSION);
         Map<String, String> javaHomePerVersion = new HashMap<>();
         javaHomePerVersion.put("1.6", "/opt/java6");
         javaHomePerVersion.put("1.7", "/opt/java7");
