@@ -1,0 +1,140 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+group = 'com.cloudbees.genapp'
+applicationName = 'tomcat8-clickstack'
+version = '1.0.0-SNAPSHOT'
+
+def tomcatVersion = "8.0.0-RC1"
+mainClassName = 'com.cloudbees.genapp.tomcat8.Setup'
+
+startScripts {
+    applicationName = 'instantiateClickstack'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations {
+    clickstackControlLib
+    clickstackContainerAgent
+    clickstackContainerLib
+    clickstackContainerLibPostgresql
+    clickstackContainerLibMySql
+    clickstackContainerLibMail
+    clickstackContainerLibMemcache
+    clickstackLib
+}
+
+
+dependencies {
+    compile 'com.fasterxml.jackson.core:jackson-core:2.1.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.1.3'
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile 'com.google.guava:guava:14.0.1'
+    testCompile 'junit:junit:4.10'
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'org.xmlmatchers:xml-matchers:1.0-RC1'
+
+    clickstackLib "org.apache.tomcat:tomcat:$tomcatVersion@zip"
+
+    clickstackControlLib 'com.cloudbees:cloudbees-jmx-invoker:1.0.2:jar-with-dependencies'
+
+    clickstackContainerAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.5'
+    clickstackContainerAgent 'com.cloudbees:run-javaagent:1.0'
+    clickstackContainerLib 'com.cloudbees:cloudbees-web-container-extras:1.0.1'
+    clickstackContainerLibPostgresql 'postgresql:postgresql:9.1-901-1.jdbc4'
+    clickstackContainerLibMySql 'mysql:mysql-connector-java:5.1.25'
+    clickstackContainerLibMail 'javax.mail:mail:1.4.7'
+    clickstackContainerLibMemcache('de.javakaffee.msm:memcached-session-manager-tc7:1.6.4') {
+        exclude group: 'couchbase', module: 'couchbase-client'
+    }
+    clickstackContainerLibMemcache 'de.javakaffee.msm:msm-kryo-serializer:1.6.4'
+}
+
+manifest {
+    // attributes 'Main-Class': 'com.cloudbees.genapp.tomcat8.Setup'
+}
+
+
+def explodedTomcatDir = "${buildDir}/tmp/explodedTomcatDir"
+
+task prepareTomcatPackage() << {
+
+    def tomcatOriginalDir = "${buildDir}/tmp/tomcatOriginal"
+
+    copy {
+        into tomcatOriginalDir
+        from configurations.clickstackLib
+    }
+    copy {
+        from zipTree("$tomcatOriginalDir/tomcat-$tomcatVersion" + ".zip")
+        into explodedTomcatDir
+        exclude { fte ->
+            // logger.warn "name=" + fte.name + ", path=" + fte.path
+            fte.path.contains("/webapps/")
+        }
+    }
+}
+
+task packageTomcat(dependsOn: 'prepareTomcatPackage', type: Zip) {
+    destinationDir buildDir
+    archiveName "tomcat-$tomcatVersion-cloudbees.zip"
+    from explodedTomcatDir
+}
+
+applicationDistribution.from(packageTomcat) {
+    into "deps/clickstackPackage"
+}
+
+task copyDependencies() << {
+
+    configurations.each { cfg ->
+        if (cfg.name.startsWith("clickstack") && !(cfg.name == "clickstackLib")) {
+            copyDeps(cfg, cfg.name)
+        } else {
+            logger.warn "Ignore $cfg.name"
+        }
+    }
+}
+distZip.dependsOn copyDependencies
+
+
+def copyDeps(configuration, targetFolder) {
+    logger.warn "Copy deps for $configuration.name into $targetFolder"
+    def workFolder = "$buildDir/tmp/deps/" + targetFolder
+    copy {
+        into workFolder
+        from configuration
+    }
+    applicationDistribution.from(workFolder) {
+        into "deps/" + targetFolder
+    }
+}
+
+task createSetupScript {
+    def scripts = file("$buildDir/tmp/scripts")
+    outputs.dir scripts
+    doLast {
+        scripts.mkdirs()
+        def text = """\
+#!/bin/bash
+set -e
+set -u
+bin/instantiateClickstack
+"""
+        File file = new File(scripts, "setup")
+        file.write(text)
+        logger.warn "File created $file.path"
+        return file
+    }
+}
+applicationDistribution.from(createSetupScript) {
+    into ""
+}
+
+
+
+
