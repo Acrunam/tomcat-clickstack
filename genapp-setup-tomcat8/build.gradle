@@ -43,9 +43,7 @@ dependencies {
     testCompile 'org.xmlmatchers:xml-matchers:1.0-RC1'
 
     clickstackLib "org.apache.tomcat:tomcat:$tomcatVersion@zip"
-
     clickstackControlLib 'com.cloudbees:cloudbees-jmx-invoker:1.0.2:jar-with-dependencies'
-
     clickstackContainerAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.5'
     clickstackContainerAgent 'com.cloudbees:run-javaagent:1.0'
     clickstackContainerLib 'com.cloudbees:cloudbees-web-container-extras:1.0.1'
@@ -139,6 +137,9 @@ applicationDistribution.from(createSetupScript) {
     into ""
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.7'
+}
 
 
 
