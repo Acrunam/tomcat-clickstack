@@ -19,6 +19,10 @@ startScripts {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        // as documented on https://code.google.com/p/spymemcached/wiki/Maven
+        url "http://files.couchbase.com/maven2/"
+    }
 }
 
 configurations {
