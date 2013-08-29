@@ -24,10 +24,12 @@ import com.fasterxml.jackson.databind.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
- * The Metadata class is instanciated by a MetadataFinder instance. It stores GenApp resources,
+ * It stores GenApp resources,
  * environment variables (given by -P with the SDK), and runtime parameters (given by -R with the SDK).
  * It also makes them accessible for other classes to (typically) write configuration files whithin ClickStacks.
  */
@@ -52,9 +54,9 @@ public class Metadata {
     }
 
     public Metadata() {
-        this.resources = new HashMap<String, Resource>();
-        this.environment = new HashMap<String, String>();
-        this.runtimeProperties = new HashMap<String, RuntimeProperty>();
+        this.resources = new HashMap<>();
+        this.environment = new HashMap<>();
+        this.runtimeProperties = new HashMap<>();
     }
 
     public <R extends Resource> R getResource(String resourceName) {
@@ -149,6 +151,12 @@ public class Metadata {
             } finally {
                 metadataInputStream.close();
             }
+        }
+
+        public static Metadata fromFile(@Nonnull Path metadataFile) throws IOException {
+            if(!Files.exists(metadataFile))
+                throw new IllegalArgumentException("Given metadata.json file does not exist: " + metadataFile);
+            return fromStream(Files.newInputStream(metadataFile));
         }
 
         /**

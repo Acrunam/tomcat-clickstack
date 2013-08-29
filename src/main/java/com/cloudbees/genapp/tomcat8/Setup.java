@@ -15,35 +15,43 @@
  */
 package com.cloudbees.genapp.tomcat8;
 
+import com.cloudbees.genapp.CommandLineUtils;
 import com.cloudbees.genapp.Files2;
 import com.cloudbees.genapp.metadata.Metadata;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.impl.SimpleLogger;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
- */
-public class Setup2 {
+public class Setup {
+    static {
+        // configure Logback SimpleLogger
+        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_DATE_TIME_KEY, "true");
+        setSystemPropertyIfNotDefined(SimpleLogger.DATE_TIME_FORMAT_KEY, "yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        setSystemPropertyIfNotDefined(SimpleLogger.LOG_FILE_KEY, "System.out");
+        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_LOG_NAME_KEY, "false");
+        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_THREAD_NAME_KEY, "false");
+    }
+
     public static final String DEFAULT_JAVA_VERSION = "1.7";
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
     final Path appDir;
-    /**
-     * ./tomcat8
-     */
     final Path catalinaHome;
     final Path genappDir;
     final Path controlDir;
     final Path clickstackDir;
-    /**
-     * ./server
-     */
     final Path catalinaBase;
     final Path warFile;
     final Path logDir;
@@ -55,7 +63,7 @@ public class Setup2 {
      * @param clickstackDir parent folder of the tomcat8-clickstack
      * @param packageDir    parent folder of {@code app.war}
      */
-    public Setup2(@Nonnull Path appDir, @Nonnull Path clickstackDir, @Nonnull Path packageDir) throws IOException {
+    public Setup(@Nonnull Path appDir, @Nonnull Path clickstackDir, @Nonnull Path packageDir) throws IOException {
         this.appDir = appDir;
 
         this.genappDir = Files.createDirectories(appDir.resolve(".genapp"));
@@ -79,10 +87,52 @@ public class Setup2 {
 
         this.warFile = packageDir.resolve("app.war");
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
+
+        logger.info("genappDir: {}", genappDir);
+        logger.info("clickstackDir: {}", clickstackDir);
+        logger.info("warFile: {}", warFile);
+        logger.info("tmpDir: {}", tmpDir);
+        logger.info("catalinaHome: {}", catalinaHome);
+        logger.info("catalinaBase: {}", catalinaBase);
+        logger.info("agentLibDir: {}", agentLibDir);
+    }
+
+    private static void setSystemPropertyIfNotDefined(String systemPropertyName, String value) {
+        if (!System.getProperties().contains(systemPropertyName))
+            System.setProperty(systemPropertyName, value);
+    }
+
+    public static void main(String[] args) throws Exception {
+        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
+
+        FileSystem fs = FileSystems.getDefault();
+        Path appDir = fs.getPath(CommandLineUtils.getOption("app_dir", args));
+        Path clickstackDir = fs.getPath(CommandLineUtils.getOption("plugin_dir", args));
+        Path packageDir = fs.getPath(CommandLineUtils.getOption("pkg_dir", args));
+        String appPort = CommandLineUtils.getOption("app_port", args);
+        Path genappDir = fs.getPath(CommandLineUtils.getOption("genapp_dir", args));
+        Path metadataPath = genappDir.resolve("metadata.json");
+
+        Metadata metadata = Metadata.Builder.fromFile(metadataPath);
+
+
+        Setup setup = new Setup(appDir, clickstackDir, packageDir);
+        Path catalinaBase = setup.installCatalinaBase();
+        setup.installCatalinaHome();
+        setup.installCloudBeesJavaAgent();
+        setup.installJmxTransAgent();
+        setup.writeJavaOpts(metadata);
+        setup.writeConfig(metadata, appPort);
+        setup.installControlScripts();
+        setup.installTomcatJavaOpts();
+
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        contextXmlBuilder.buildTomcatConfigurationFiles(catalinaBase);
     }
 
     public void installTomcatJavaOpts() throws IOException {
         Path optsFile = controlDir.resolve("java-opts-20-tomcat-opts");
+        logger.debug("installTomcatJavaOpts() {}", optsFile);
 
         String opts = "" +
                 "-Djava.io.tmpdir=\"" + tmpDir + "\" " +
@@ -95,6 +145,7 @@ public class Setup2 {
     }
 
     public void installCatalinaHome() throws Exception {
+        logger.debug("installCatalinaHome() {}", catalinaHome);
 
         // echo "Installing tomcat8"
         Files2.unzip(clickstackDir.resolve("lib/tomcat8.zip"), catalinaHome);
@@ -114,7 +165,9 @@ public class Setup2 {
         Files2.chmodReadOnly(catalinaHome);
     }
 
-    public void installCatalinaBase() throws IOException {
+    public Path installCatalinaBase() throws IOException {
+        logger.debug("installCatalinaBase() {}", catalinaBase);
+
         Files2.copyDirectoryContent(clickstackDir.resolve("server"), catalinaBase);
 
         Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
@@ -126,10 +179,11 @@ public class Setup2 {
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
         Files2.chmodReadWrite(rootWebAppDir);
+        return catalinaBase;
     }
 
     public void installJmxTransAgent() throws IOException {
-
+        logger.debug("installJmxTransAgent() {}", agentLibDir);
 
         Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "jmxtrans-agent", agentLibDir);
         Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat8-metrics.xml");
@@ -146,6 +200,8 @@ public class Setup2 {
     }
 
     public void installCloudBeesJavaAgent() throws IOException {
+        logger.debug("installCloudBeesJavaAgent() {}", agentLibDir);
+
         Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "run-javaagent", this.agentLibDir);
         Path agentOptsFile = controlDir.resolve("java-opts-20-java-agent");
 
@@ -158,6 +214,8 @@ public class Setup2 {
 
     public void writeJavaOpts(Metadata metadata) throws IOException {
         Path javaOptsFile = controlDir.resolve("java-opts-10-core");
+        logger.debug("writeJavaOpts() {}", javaOptsFile);
+
         String javaOpts = metadata.getRuntimeParameter("java", "opts", "");
         Files.write(javaOptsFile, Collections.singleton(javaOpts), Charsets.UTF_8);
     }
@@ -165,6 +223,8 @@ public class Setup2 {
     public void writeConfig(Metadata metadata, String appPort) throws IOException {
 
         Path configFile = controlDir.resolve("config");
+        logger.debug("writeConfig() {}", configFile);
+
         PrintWriter writer = new PrintWriter(Files.newOutputStream(configFile));
 
         writer.println("app_dir=\"" + appDir + "\"");
@@ -183,8 +243,6 @@ public class Setup2 {
 
         writer.println("catalina_opts=\"-Dport.http=" + appPort + "\"");
 
-        // We installed additional libraries in $tomcat8_dir/lib at the
-        // install_tomcat8 step, which means that we have to add them to the CP.
         String classpath = "" +
                 catalinaHome.resolve("bin/bootstrap.jar") + ":" +
                 catalinaHome.resolve("bin/tomcat-juli.jar") + ":" +
@@ -195,6 +253,8 @@ public class Setup2 {
     }
 
     public void installControlScripts() throws IOException {
+        logger.debug("installControlScripts() {}", controlDir);
+
         Files2.copyDirectoryContent(clickstackDir.resolve("control"), controlDir);
         Files2.chmodReadExecute(controlDir);
 

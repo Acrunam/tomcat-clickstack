@@ -39,7 +39,6 @@ public class Strings2 {
         return str.substring(0, idx);
     }
 
-
     /**
      * @param str
      * @param searchFor
@@ -54,6 +53,20 @@ public class Strings2 {
         if (idx == -1) {
             return null;
         }
-        return str.substring(idx+1);
+        return str.substring(idx + 1);
+    }
+
+    public static boolean beginWith(@Nullable String str, @Nullable String prefix) {
+        if (str == null && prefix == null)
+            return true;
+
+
+        if (str == null || prefix == null)
+            return false;
+
+        if (prefix.isEmpty())
+            return true;
+
+        return str.indexOf(prefix) == 0;
     }
 }

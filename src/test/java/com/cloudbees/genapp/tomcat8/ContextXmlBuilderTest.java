@@ -38,7 +38,6 @@ import java.io.IOException;
  */
 public class ContextXmlBuilderTest {
 
-    File appDir = new File(System.getProperty("java.io.tmpdir"));
     private Document serverXml;
     private Document contextXml;
 
@@ -63,6 +62,7 @@ public class ContextXmlBuilderTest {
         test_private_app_valve(json, xml);
 
     }
+
     @Test
     public void add_private_app_valve_success_basic_auth_config() throws Exception {
         // prepare
@@ -86,7 +86,7 @@ public class ContextXmlBuilderTest {
 
     private void test_private_app_valve(String metadataDotJson, String expectedXml) throws IOException {
         Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata, appDir);
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
         // run
         contextXmlBuilder.addPrivateAppValve(metadata, serverXml, contextXml);
 
@@ -114,7 +114,7 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata, appDir);
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
 
         Database database = metadata.getResource("mydb");
 
@@ -159,7 +159,7 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata, appDir);
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
 
         SessionStore sessionStore = metadata.getResource("memcache-session-store");
 
@@ -200,7 +200,7 @@ public class ContextXmlBuilderTest {
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
         Email email = metadata.getResource("mail/SendGrid");
 
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata, appDir);
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
 
         // run
         contextXmlBuilder.addEmail(email, serverXml, contextXml);

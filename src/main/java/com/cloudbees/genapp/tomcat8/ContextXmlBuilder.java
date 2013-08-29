@@ -1,17 +1,21 @@
 package com.cloudbees.genapp.tomcat8;
 
-import java.io.File;
+import com.cloudbees.genapp.XmlUtils;
+import com.cloudbees.genapp.metadata.Metadata;
+import com.cloudbees.genapp.metadata.resource.Database;
+import com.cloudbees.genapp.metadata.resource.Email;
+import com.cloudbees.genapp.metadata.resource.Resource;
+import com.cloudbees.genapp.metadata.resource.SessionStore;
+import com.google.common.base.Preconditions;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-import javax.xml.parsers.*;
-
-import com.cloudbees.genapp.XmlUtils;
-import org.w3c.dom.*;
-
-import com.cloudbees.genapp.metadata.Metadata;
-import com.cloudbees.genapp.metadata.resource.*;
 
 public class ContextXmlBuilder {
 
@@ -28,16 +32,9 @@ public class ContextXmlBuilder {
             "fairQueue", "abandonWhenPercentageFull", "maxAge", "useEquals", "suspectTimeout", "rollbackOnReturn",
             "commitOnReturn", "alternateUsernameAllowed", "useDisposableConnectionFacade", "logValidationErrors",
             "propagateInterruptState"));
-    private File appDir;
 
-    public ContextXmlBuilder(Metadata metadata, File appDir) {
+    public ContextXmlBuilder(Metadata metadata) {
         this.metadata = metadata;
-        if (!appDir.exists()) {
-            throw new IllegalArgumentException("appDir does not exist '" + appDir.getAbsolutePath() + "'");
-        } else if (!appDir.isDirectory()) {
-            throw new IllegalArgumentException("appDir must be a directory '" + appDir.getAbsolutePath() + "'");
-        }
-        this.appDir = appDir;
     }
 
     protected ContextXmlBuilder addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
@@ -163,22 +160,27 @@ public class ContextXmlBuilder {
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
     }
 
-    /**
-     * @param serverXmlFilePath relative to {@link #appDir}
-     * @param contextXmlFilePath relative to {@link #appDir}
-     */
-    public void buildTomcatConfigurationFiles(String serverXmlFilePath, String contextXmlFilePath) throws Exception {
+    public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
 
-        File contextXmlFile = new File(appDir, contextXmlFilePath);
-        Document contextXmlDocument = XmlUtils.loadXmlDocumentFromFile(contextXmlFile);
+        Preconditions.checkArgument(Files.exists(catalinaBase), "Given catalina.base does not exist {}", catalinaBase);
+        Preconditions.checkArgument(Files.isDirectory(catalinaBase), "Given catalina.base is not a directory {}", catalinaBase);
+
+
+        Path contextXmlPath = catalinaBase.resolve("conf/context.xml");
+        Preconditions.checkArgument(Files.exists(contextXmlPath), "Given context.xml does not exist {}", contextXmlPath);
+
+        Document contextXmlDocument = XmlUtils.loadXmlDocumentFromFile(contextXmlPath.toFile());
         XmlUtils.checkRootElement(contextXmlDocument, "Context");
 
-        File serverXmlFile = new File(appDir, serverXmlFilePath);
-        Document serverXmlDocument = XmlUtils.loadXmlDocumentFromFile(serverXmlFile);
+
+        Path serverXmlPath = catalinaBase.resolve("conf/server.xml");
+        Preconditions.checkArgument(Files.exists(serverXmlPath), "Given server.xml does not exist {}", serverXmlPath);
+
+        Document serverXmlDocument = XmlUtils.loadXmlDocumentFromFile(serverXmlPath.toFile());
 
         this.buildTomcatConfiguration(metadata, serverXmlDocument, contextXmlDocument);
 
-        XmlUtils.flush(contextXmlDocument, new FileOutputStream(contextXmlFile));
-        XmlUtils.flush(serverXmlDocument, new FileOutputStream(serverXmlFile));
+        XmlUtils.flush(contextXmlDocument, new FileOutputStream(contextXmlPath.toFile()));
+        XmlUtils.flush(serverXmlDocument, new FileOutputStream(serverXmlPath.toFile()));
     }
 }
