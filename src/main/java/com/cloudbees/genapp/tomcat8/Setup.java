@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class Setup {
     static {
@@ -72,9 +73,9 @@ public class Setup {
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
         Files2.chmodReadWrite(logDir);
 
-        this.catalinaHome = Files.createDirectories(appDir.resolve("tomcat8"));
+        this.catalinaHome = Files.createDirectories(appDir.resolve("home"));
 
-        this.catalinaBase = Files.createDirectories(appDir.resolve("server"));
+        this.catalinaBase = Files.createDirectories(appDir.resolve("base"));
 
         this.agentLibDir = Files.createDirectories(catalinaHome.resolve("agent-lib"));
 
@@ -88,13 +89,13 @@ public class Setup {
         this.warFile = packageDir.resolve("app.war");
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
 
-        logger.info("genappDir: {}", genappDir);
-        logger.info("clickstackDir: {}", clickstackDir);
-        logger.info("warFile: {}", warFile);
-        logger.info("tmpDir: {}", tmpDir);
-        logger.info("catalinaHome: {}", catalinaHome);
-        logger.info("catalinaBase: {}", catalinaBase);
-        logger.info("agentLibDir: {}", agentLibDir);
+        logger.info("genappDir: {}", genappDir.toAbsolutePath());
+        logger.info("clickstackDir: {}", clickstackDir.toAbsolutePath());
+        logger.info("warFile: {}", warFile.toAbsolutePath());
+        logger.info("tmpDir: {}", tmpDir.toAbsolutePath());
+        logger.info("catalinaHome: {}", catalinaHome.toAbsolutePath());
+        logger.info("catalinaBase: {}", catalinaBase.toAbsolutePath());
+        logger.info("agentLibDir: {}", agentLibDir.toAbsolutePath());
     }
 
     private static void setSystemPropertyIfNotDefined(String systemPropertyName, String value) {
@@ -104,13 +105,28 @@ public class Setup {
 
     public static void main(String[] args) throws Exception {
         System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
+        Logger initialisationLogger = LoggerFactory.getLogger(Setup.class);
 
         FileSystem fs = FileSystems.getDefault();
+        initialisationLogger.info("Start setup, current dir {}", fs.getPath(".").toAbsolutePath());
+
         Path appDir = fs.getPath(CommandLineUtils.getOption("app_dir", args));
-        Path clickstackDir = fs.getPath(CommandLineUtils.getOption("plugin_dir", args));
+        Path clickstackDir;
+        try {
+            clickstackDir = fs.getPath(CommandLineUtils.getOption("plugin_dir", args));
+        } catch (NoSuchElementException e) {
+            clickstackDir = fs.getPath(".");
+            initialisationLogger.info("'plugin_dir' param not defined, default to '.': {}", clickstackDir.toAbsolutePath());
+        }
         Path packageDir = fs.getPath(CommandLineUtils.getOption("pkg_dir", args));
         String appPort = CommandLineUtils.getOption("app_port", args);
-        Path genappDir = fs.getPath(CommandLineUtils.getOption("genapp_dir", args));
+        Path genappDir;
+        try {
+            genappDir = fs.getPath(CommandLineUtils.getOption("genapp_dir", args));
+        } catch (NoSuchElementException e) {
+            genappDir = packageDir.resolve(".genapp");
+            initialisationLogger.info("'genapp_dir' param not defined, infer from 'pkg_dir': {}", genappDir.toAbsolutePath());
+        }
         Path metadataPath = genappDir.resolve("metadata.json");
 
         Metadata metadata = Metadata.Builder.fromFile(metadataPath);
@@ -148,19 +164,21 @@ public class Setup {
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
         // echo "Installing tomcat8"
-        Files2.unzip(clickstackDir.resolve("lib/tomcat8.zip"), catalinaHome);
+        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("package/deps/clickstackPackage"), "tomcat", "zip");
+        Files2.unzip(tomcatPackagePath, catalinaHome);
         // echo "Installing external libraries"
         Path targetLibDir = Files.createDirectories(catalinaHome.resolve("lib"));
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "cloudbees-web-container-extras", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "genapp-setup-tomcat8", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "mysql-connector-java", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "postgresql", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibMySql"), "mysql-connector-java", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibPostgresql"), "postgresql", targetLibDir);
 
         // Mail
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "mail", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "activation", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibMail"), "mail", targetLibDir);
+
+        // Memcache
+        // TODO once memcached-session-manager is available for tomcat8
 
         Files2.chmodReadOnly(catalinaHome);
     }
@@ -168,7 +186,7 @@ public class Setup {
     public Path installCatalinaBase() throws IOException {
         logger.debug("installCatalinaBase() {}", catalinaBase);
 
-        Files2.copyDirectoryContent(clickstackDir.resolve("server"), catalinaBase);
+        Files2.copyDirectoryContent(clickstackDir.resolve("package/tomcat/base"), catalinaBase);
 
         Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
         Files2.chmodReadWrite(workDir);
@@ -185,7 +203,7 @@ public class Setup {
     public void installJmxTransAgent() throws IOException {
         logger.debug("installJmxTransAgent() {}", agentLibDir);
 
-        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "jmxtrans-agent", agentLibDir);
+        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerAgent"), "jmxtrans-agent", agentLibDir);
         Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat8-metrics.xml");
         Preconditions.checkState(Files.exists(jmxtransAgentConfigurationFile), "File %s does not exist", jmxtransAgentConfigurationFile);
         Path jmxtransAgentDataFile = logDir.resolve("tomcat8-metrics.data");
@@ -202,7 +220,7 @@ public class Setup {
     public void installCloudBeesJavaAgent() throws IOException {
         logger.debug("installCloudBeesJavaAgent() {}", agentLibDir);
 
-        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "run-javaagent", this.agentLibDir);
+        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerAgent"), "run-javaagent", this.agentLibDir);
         Path agentOptsFile = controlDir.resolve("java-opts-20-java-agent");
 
         String agentOptsFileData = "-javaagent:" +
@@ -255,13 +273,13 @@ public class Setup {
     public void installControlScripts() throws IOException {
         logger.debug("installControlScripts() {}", controlDir);
 
-        Files2.copyDirectoryContent(clickstackDir.resolve("control"), controlDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("package/script"), controlDir);
         Files2.chmodReadExecute(controlDir);
 
         Path genappLibDir = genappDir.resolve("lib");
         Files.createDirectories(genappLibDir);
 
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("lib"), "cloudbees-jmx-invoker", genappLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackControlLib"), "cloudbees-jmx-invoker", genappLibDir);
     }
 
     public Path findJava(Metadata metadata) {

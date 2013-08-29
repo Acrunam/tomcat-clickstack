@@ -19,6 +19,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class Files2 {
     final static Set<PosixFilePermission> PERMISSION_750 = Collections.unmodifiableSet(PosixFilePermissions.fromString("rwxr-x---"));
     final static Set<PosixFilePermission> PERMISSION_770 = Collections.unmodifiableSet(PosixFilePermissions.fromString("rwxrwx---"));
     final static Set<PosixFilePermission> PERMISSION_640 = Collections.unmodifiableSet(PosixFilePermissions.fromString("rw-r-----"));
+    private static final Logger logger = LoggerFactory.getLogger(Files2.class);
 
     public static void deleteDirectory(Path dir) throws IOException {
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
@@ -48,7 +51,7 @@ public class Files2 {
             public FileVisitResult visitFile(Path file,
                                              BasicFileAttributes attrs) throws IOException {
 
-                // System.out.println("Deleting file: " + file);
+                logger.trace("Delete file: {} ...", file);
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
@@ -57,8 +60,8 @@ public class Files2 {
             public FileVisitResult postVisitDirectory(Path dir,
                                                       IOException exc) throws IOException {
 
-                // System.out.println("Deleting dir: " + dir);
                 if (exc == null) {
+                    logger.trace("Delete dir: {} ...", dir);
                     Files.delete(dir);
                     return FileVisitResult.CONTINUE;
                 } else {
@@ -175,7 +178,7 @@ public class Files2 {
     public static void unzip(Path zipFile, final Path destDir) throws IOException {
         //if the destination doesn't exist, create it
         if (Files.notExists(destDir)) {
-            System.out.println(destDir + " does not exist. Creating...");
+            logger.trace("Create dir: {}", destDir);
             Files.createDirectories(destDir);
         }
 
@@ -188,7 +191,7 @@ public class Files2 {
                 public FileVisitResult visitFile(Path file,
                                                  BasicFileAttributes attrs) throws IOException {
                     final Path destFile = Paths.get(destDir.toString(), file.toString());
-                    // System.out.printf("Extracting file %s to %s\n", file, destFile);
+                    logger.trace("Extract file {} to {}", file, destDir);
                     Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
                     return FileVisitResult.CONTINUE;
                 }
@@ -199,7 +202,7 @@ public class Files2 {
                     final Path dirToCreate = Paths.get(destDir.toString(), dir.toString());
 
                     if (Files.notExists(dirToCreate)) {
-                        // System.out.printf("Creating directory %s\n", dirToCreate);
+                        logger.trace("Create dir {}", dirToCreate);
                         Files.createDirectory(dirToCreate);
                     }
                     return FileVisitResult.CONTINUE;
@@ -227,7 +230,7 @@ public class Files2 {
     }
 
     public static void copyDirectoryContent(final Path fromPath, final Path toPath) throws IOException {
-        System.out.println("Copy " + fromPath + " to " + toPath);
+        logger.trace("Copy from {} to {}", fromPath, toPath);
 
         FileVisitor<Path> copyDirVisitor = new SimpleFileVisitor<Path>() {
 
@@ -263,9 +266,13 @@ public class Files2 {
     }
 
     @Nonnull
-    public static Path findArtifact(Path source, final String artifactId) throws IOException {
-        final String type = "jar";
-        Preconditions.checkArgument(Files.isDirectory(source), "Dest %s is not a directory");
+    public static Path findArtifact(@Nonnull Path source, @Nonnull final String artifactId) throws IOException {
+        return findArtifact(source, artifactId, "jar");
+    }
+
+    @Nonnull
+    public static Path findArtifact(@Nonnull Path source, @Nonnull final String artifactId, @Nonnull final String type) throws IOException {
+        Preconditions.checkArgument(Files.isDirectory(source), "Dest %s is not a directory", source.toAbsolutePath());
 
         DirectoryStream<Path> paths = Files.newDirectoryStream(source, new DirectoryStream.Filter<Path>() {
             @Override
@@ -281,9 +288,9 @@ public class Files2 {
         try {
             return Iterables.getOnlyElement(paths);
         } catch (NoSuchElementException e) {
-            throw new IllegalStateException("Artifact " + artifactId + " not found in " + source);
+            throw new IllegalStateException("Artifact '" + artifactId + ":" + type + "' not found in path: " + source + ", absolutePath: " + source.toAbsolutePath());
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("More than 1 version of artifact " + artifactId + " found in " + source + ": " + paths);
+            throw new IllegalStateException("More than 1 version of artifact '" + artifactId + ":" + type + "' found in path: " + source + ", absolutePath: " + source.toAbsolutePath() + " -> " + paths);
         }
     }
 

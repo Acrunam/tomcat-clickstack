@@ -91,7 +91,7 @@ task prepareTomcatPackage() << {
 task packageTomcat(dependsOn: 'prepareTomcatPackage', type: Zip) {
     destinationDir buildDir
     archiveName "tomcat-$tomcatVersion-cloudbees.zip"
-    from explodedTomcatDir
+    from new File(explodedTomcatDir, "apache-tomcat-$tomcatVersion")
 }
 
 applicationDistribution.from(packageTomcat) {
@@ -128,7 +128,8 @@ task createSetupScript {
         scripts.mkdirs()
         def text = """\
 #!/bin/bash
-\$(dirname \$0)/bin/instantiateClickstack \$@
+cd \$(dirname \$0)
+bin/instantiateClickstack \$@
 """
         File file = new File(scripts, "setup")
         file.write(text)
