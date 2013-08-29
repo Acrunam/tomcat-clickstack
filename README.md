@@ -4,18 +4,12 @@ To use:
 
     bees app:deploy -t tomcat8 -a APP_ID WAR_FILE
 
-Tomcat 7 ClickStack for CloudBees PaaS. Deploy any Servlet2.x/3.x/JSP.
+Tomcat 8 ClickStack for CloudBees PaaS.
 
-# Pre-requisites
-
-* OpenJDK 6
-* Bash shell
-* Make tools
-* Apache Maven
 
 # Build 
 
-    $ make clean pkg
+    $  gradlew clean installApp distZip
 
 After successful build tomcat8-plugin.zip is created and can be uploaded to the CloudBees platform location by the CloudBees team.
 
@@ -32,13 +26,6 @@ Note: You should be familiar with developing ClickStacks using the genapp system
 
     { "app": {  "plugins": ["tomcat8"] } }
 
-# Testing the plugin on CloudBees
-
-You can deploy the tomcat8-plugin.zip to S3 using the following command:
-
-    $ make publish_repo=dev publish
-
-If you don't have S3 creds or tools setup, follow the instructions in the publish error messages.
 
 Once the plugin is published to a public URL, you can update an app to use it with the CloudBees SDK:
 
