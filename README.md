@@ -36,7 +36,7 @@ Once the plugin is published to a public URL, you can update an app to use it wi
 
 ## TODOs`
 
-- [ ] $war_home/META-INF/server.xml` overlays `$catalina_base/conf/server.xml`. Then do the same for `logging.properties`, `context.xml` and `web.xml`
-- [ ] support `$war_home/META-INF/lib/ to add jars to Tomcat classpath
+- [ ] support `$war_home/META-INF/server.xml` overlays of `$catalina_base/conf/server.xml`. Then do the same for `logging.properties`, `context.xml` and `web.xml`
+- [ ] support `$war_home/META-INF/lib/` to add jars to Tomcat classpath
 - [ ] support `$war_home/META-INF/extra-files/` to add jars to `$app_extra_files/`
 
