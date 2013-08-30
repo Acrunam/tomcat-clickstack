@@ -136,7 +136,7 @@ exec \$plugin_dir/bin/instantiateClickstack \$@
 """
         File file = new File(scripts, "setup")
         file.write(text)
-        file.setExecutable(true)
+        file.setExecutable(true, false)
         return file
     }
 }
