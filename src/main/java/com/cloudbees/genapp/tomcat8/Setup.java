@@ -65,6 +65,10 @@ public class Setup {
      * @param packageDir    parent folder of {@code app.war}
      */
     public Setup(@Nonnull Path appDir, @Nonnull Path clickstackDir, @Nonnull Path packageDir) throws IOException {
+        logger.info("clickstackDir: {}", clickstackDir.toAbsolutePath());
+        logger.info("appDir: {}", appDir.toAbsolutePath());
+        logger.info("packageDir: {}", packageDir.toAbsolutePath());
+
         this.appDir = appDir;
 
         this.genappDir = Files.createDirectories(appDir.resolve(".genapp"));
@@ -89,13 +93,12 @@ public class Setup {
         this.warFile = packageDir.resolve("app.war");
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
 
-        logger.info("genappDir: {}", genappDir.toAbsolutePath());
-        logger.info("clickstackDir: {}", clickstackDir.toAbsolutePath());
-        logger.info("warFile: {}", warFile.toAbsolutePath());
-        logger.info("tmpDir: {}", tmpDir.toAbsolutePath());
-        logger.info("catalinaHome: {}", catalinaHome.toAbsolutePath());
-        logger.info("catalinaBase: {}", catalinaBase.toAbsolutePath());
-        logger.info("agentLibDir: {}", agentLibDir.toAbsolutePath());
+        logger.debug("warFile: {}", warFile.toAbsolutePath());
+        logger.debug("tmpDir: {}", tmpDir.toAbsolutePath());
+        logger.debug("genappDir: {}", genappDir.toAbsolutePath());
+        logger.debug("catalinaHome: {}", catalinaHome.toAbsolutePath());
+        logger.debug("catalinaBase: {}", catalinaBase.toAbsolutePath());
+        logger.debug("agentLibDir: {}", agentLibDir.toAbsolutePath());
     }
 
     private static void setSystemPropertyIfNotDefined(String systemPropertyName, String value) {
@@ -104,7 +107,7 @@ public class Setup {
     }
 
     public static void main(String[] args) throws Exception {
-        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
+        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
         Logger initialisationLogger = LoggerFactory.getLogger(Setup.class);
 
         FileSystem fs = FileSystems.getDefault();
@@ -203,7 +206,7 @@ public class Setup {
     public void installJmxTransAgent() throws IOException {
         logger.debug("installJmxTransAgent() {}", agentLibDir);
 
-        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-agent-lib"), "jmxtrans-agent", agentLibDir);
+        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/java-agent-lib"), "jmxtrans-agent", agentLibDir);
         Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat8-metrics.xml");
         Preconditions.checkState(Files.exists(jmxtransAgentConfigurationFile), "File %s does not exist", jmxtransAgentConfigurationFile);
         Path jmxtransAgentDataFile = logDir.resolve("tomcat8-metrics.data");
@@ -220,7 +223,7 @@ public class Setup {
     public void installCloudBeesJavaAgent() throws IOException {
         logger.debug("installCloudBeesJavaAgent() {}", agentLibDir);
 
-        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-agent-lib"), "cloudbees-clickstack-javaagent", this.agentLibDir);
+        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/java-agent-lib"), "cloudbees-clickstack-javaagent", this.agentLibDir);
         Path agentOptsFile = controlDir.resolve("java-opts-20-java-agent");
 
         Path envFile = controlDir.resolve("env");
