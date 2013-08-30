@@ -17,7 +17,6 @@ startScripts {
 }
 
 repositories {
-    // mavenLocal()
     mavenCentral()
     maven {
         // as documented on https://code.google.com/p/spymemcached/wiki/Maven
@@ -89,7 +88,7 @@ task prepareTomcatPackage() << {
 }
 
 task packageTomcat(dependsOn: 'prepareTomcatPackage', type: Zip) {
-    destinationDir buildDir
+    destinationDir new File(buildDir,"tmp")
     archiveName "tomcat-$tomcatVersion-cloudbees.zip"
     from new File(explodedTomcatDir, "apache-tomcat-$tomcatVersion")
 }
@@ -156,10 +155,14 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.7'
 }
 
-distZip.dependsOn copyDependencies
 installApp.dependsOn copyDependencies
 
-
+task distZip(overwrite: true, dependsOn: 'installApp', type: Zip) {
+    description = 'overwrite to exclude the parent folder of the generated zip'
+    destinationDir new File(buildDir, "distributions")
+    archiveName "$project.name-$project.version" + ".zip"
+    from new File("$buildDir/install", "$project.name")
+}
 
 idea {
     project {
