@@ -103,8 +103,6 @@ applicationDistribution.from(packageTomcat) {
 task copyDependencies() << {
 
     configurations.each { cfg ->
-        //if (cfg.name.startsWith("clickstack") && !(cfg.name == "clickstackPackage")) {
-        // copyDeps(cfg, cfg.name)
         if (cfg.ext.has("targetFolder")) {
             copyDeps(cfg, cfg.ext.targetFolder)
         } else {
