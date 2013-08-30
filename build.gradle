@@ -129,8 +129,10 @@ task createSetupScript {
         scripts.mkdirs()
         def text = """\
 #!/bin/bash
-cd \$(dirname \$0)
-bin/instantiateClickstack \$@
+echo "Current dir \$(pwd)"
+echo "Current exec \$0"
+echo "Invoke \$plugin_dir/bin/instantiateClickstack \$@"
+exec \$plugin_dir/bin/instantiateClickstack \$@
 """
         File file = new File(scripts, "setup")
         file.write(text)
