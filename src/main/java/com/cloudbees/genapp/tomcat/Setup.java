@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudbees.genapp.tomcat8;
+package com.cloudbees.genapp.tomcat;
 
 import com.cloudbees.genapp.CommandLineUtils;
 import com.cloudbees.genapp.Files2;
@@ -61,7 +61,7 @@ public class Setup {
 
     /**
      * @param appDir        parent folder of the instantiated app with {@code catalina.home}, {@code catalina.base}, ...
-     * @param clickstackDir parent folder of the tomcat8-clickstack
+     * @param clickstackDir parent folder of the tomcat-clickstack
      * @param packageDir    parent folder of {@code app.war}
      */
     public Setup(@Nonnull Path appDir, @Nonnull Path clickstackDir, @Nonnull Path packageDir) throws IOException {
@@ -166,7 +166,7 @@ public class Setup {
     public void installCatalinaHome() throws Exception {
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
-        // echo "Installing tomcat8"
+        // echo "Installing tomcat"
         Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("package/deps/tomcat-package"), "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, catalinaHome);
         // echo "Installing external libraries"
@@ -181,7 +181,7 @@ public class Setup {
         Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-mail"), "mail", targetLibDir);
 
         // Memcache
-        // TODO once memcached-session-manager is available for tomcat8
+        // TODO once memcached-session-manager is available for tomcat
 
         Files2.chmodReadOnly(catalinaHome);
     }
@@ -207,15 +207,15 @@ public class Setup {
         logger.debug("installJmxTransAgent() {}", agentLibDir);
 
         Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/java-agent-lib"), "jmxtrans-agent", agentLibDir);
-        Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat8-metrics.xml");
+        Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat-metrics.xml");
         Preconditions.checkState(Files.exists(jmxtransAgentConfigurationFile), "File %s does not exist", jmxtransAgentConfigurationFile);
-        Path jmxtransAgentDataFile = logDir.resolve("tomcat8-metrics.data");
+        Path jmxtransAgentDataFile = logDir.resolve("tomcat-metrics.data");
 
         Path agentOptsFile = controlDir.resolve("java-opts-60-jmxtrans-agent");
 
         String agentOptsFileData =
                 "-javaagent:" + jmxtransAgentJarFile.toString() + "=" + jmxtransAgentConfigurationFile.toString() +
-                        " -Dtomcat8_metrics_data_file=" + jmxtransAgentDataFile.toString();
+                        " -Dtomcat_metrics_data_file=" + jmxtransAgentDataFile.toString();
 
         Files.write(agentOptsFile, Collections.singleton(agentOptsFileData), Charsets.UTF_8);
     }

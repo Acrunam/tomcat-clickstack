@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudbees.genapp.tomcat8;
+package com.cloudbees.genapp.tomcat;
 
 import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
 import static org.xmlmatchers.XmlMatchers.*;
 import static org.xmlmatchers.transform.XmlConverters.*;
 
@@ -30,7 +29,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.io.File;
 import java.io.IOException;
 
 /**

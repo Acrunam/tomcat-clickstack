@@ -129,7 +129,7 @@
     </queries>
 
     <outputWriter class="org.jmxtrans.agent.SummarizingFileOverwriterOutputWriter">
-      <fileName>${tomcat8_metrics_data_file:jmxtrans-agent.data}</fileName>
+      <fileName>${tomcat_metrics_data_file:jmxtrans-agent.data}</fileName>
     </outputWriter>
 
     <collectIntervalInSeconds>20</collectIntervalInSeconds>

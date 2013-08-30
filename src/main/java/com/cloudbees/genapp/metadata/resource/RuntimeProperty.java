@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * This class stores properties for a given section (i.e. java, tomcat8, glassfish3, etc...)
+ * This class stores properties for a given section (i.e. java, tomcat, glassfish3, etc...)
  */
 
 public class RuntimeProperty {
