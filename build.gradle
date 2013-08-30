@@ -26,13 +26,13 @@ repositories {
 }
 
 configurations {
-    clickstackControlLib
-    clickstackContainerAgent
-    clickstackContainerLib
-    clickstackContainerLibPostgresql
-    clickstackContainerLibMySql
-    clickstackContainerLibMail
-    clickstackContainerLibMemcache
+    clickstackControlLib.ext.targetFolder = "control-lib"
+    clickstackContainerAgent.ext.targetFolder = "tomcat-agent-lib"
+    clickstackContainerLib.ext.targetFolder = "tomcat-lib"
+    clickstackContainerLibPostgresql.ext.targetFolder = "tomcat-lib-postgresql"
+    clickstackContainerLibMySql.ext.targetFolder = "tomcat-lib-mysql"
+    clickstackContainerLibMail.ext.targetFolder = "tomcat-lib-mail"
+    clickstackContainerLibMemcache.ext.targetFolder = "tomcat-lib-memcache"
     clickstackLib
 }
 
@@ -51,8 +51,8 @@ dependencies {
 
     clickstackLib "org.apache.tomcat:tomcat:$tomcatVersion@zip"
     clickstackControlLib 'com.cloudbees:cloudbees-jmx-invoker:1.0.2:jar-with-dependencies'
-    clickstackContainerAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.5'
-    clickstackContainerAgent 'com.cloudbees:run-javaagent:1.0'
+    clickstackContainerAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.6'
+    clickstackContainerAgent 'com.cloudbees.clickstack:cloudbees-clickstack-javaagent:1.2.0'
     clickstackContainerLib 'com.cloudbees:cloudbees-web-container-extras:1.0.1'
     clickstackContainerLibPostgresql 'postgresql:postgresql:9.1-901-1.jdbc4'
     clickstackContainerLibMySql 'mysql:mysql-connector-java:5.1.25'
@@ -64,7 +64,7 @@ dependencies {
 }
 
 manifest {
-    // attributes 'Main-Class': 'com.cloudbees.genapp.tomcat8.Setup'
+    attributes 'Main-Class': 'com.cloudbees.genapp.tomcat8.Setup'
 }
 
 
@@ -82,7 +82,7 @@ task prepareTomcatPackage() << {
         from zipTree("$tomcatOriginalDir/tomcat-$tomcatVersion" + ".zip")
         into explodedTomcatDir
         exclude { fte ->
-            // logger.warn "name=" + fte.name + ", path=" + fte.path
+            logger.debug "name=$fte.name, path=$fte.path"
             fte.path.contains("/webapps/")
         }
     }
@@ -95,22 +95,24 @@ task packageTomcat(dependsOn: 'prepareTomcatPackage', type: Zip) {
 }
 
 applicationDistribution.from(packageTomcat) {
-    into "package/deps/clickstackPackage"
+    into "package/deps/tomcat-package"
 }
 
 task copyDependencies() << {
 
     configurations.each { cfg ->
-        if (cfg.name.startsWith("clickstack") && !(cfg.name == "clickstackLib")) {
-            copyDeps(cfg, cfg.name)
+        //if (cfg.name.startsWith("clickstack") && !(cfg.name == "clickstackLib")) {
+        // copyDeps(cfg, cfg.name)
+        if (cfg.ext.has("targetFolder")) {
+            copyDeps(cfg, cfg.ext.targetFolder)
         } else {
-            logger.warn "Ignore $cfg.name"
+            logger.debug "Ignore $cfg.name"
         }
     }
 }
 
 def copyDeps(configuration, targetFolder) {
-    logger.warn "Copy deps for $configuration.name into $targetFolder"
+    logger.debug "Copy deps for $configuration.name into $targetFolder"
     def workFolder = "$buildDir/tmp/deps/" + targetFolder
     copy {
         into workFolder
@@ -134,7 +136,6 @@ bin/instantiateClickstack \$@
         File file = new File(scripts, "setup")
         file.write(text)
         file.setExecutable(true)
-        logger.warn "File created $file.path"
         return file
     }
 }

@@ -164,18 +164,18 @@ public class Setup {
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
         // echo "Installing tomcat8"
-        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("package/deps/clickstackPackage"), "tomcat", "zip");
+        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("package/deps/tomcat-package"), "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, catalinaHome);
         // echo "Installing external libraries"
         Path targetLibDir = Files.createDirectories(catalinaHome.resolve("lib"));
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLib"), "cloudbees-web-container-extras", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibMySql"), "mysql-connector-java", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibPostgresql"), "postgresql", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-mysql"), "mysql-connector-java", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-postgresql"), "postgresql", targetLibDir);
 
         // Mail
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerLibMail"), "mail", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-mail"), "mail", targetLibDir);
 
         // Memcache
         // TODO once memcached-session-manager is available for tomcat8
@@ -203,7 +203,7 @@ public class Setup {
     public void installJmxTransAgent() throws IOException {
         logger.debug("installJmxTransAgent() {}", agentLibDir);
 
-        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerAgent"), "jmxtrans-agent", agentLibDir);
+        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-agent-lib"), "jmxtrans-agent", agentLibDir);
         Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat8-metrics.xml");
         Preconditions.checkState(Files.exists(jmxtransAgentConfigurationFile), "File %s does not exist", jmxtransAgentConfigurationFile);
         Path jmxtransAgentDataFile = logDir.resolve("tomcat8-metrics.data");
@@ -220,12 +220,16 @@ public class Setup {
     public void installCloudBeesJavaAgent() throws IOException {
         logger.debug("installCloudBeesJavaAgent() {}", agentLibDir);
 
-        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackContainerAgent"), "run-javaagent", this.agentLibDir);
+        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-agent-lib"), "cloudbees-clickstack-javaagent", this.agentLibDir);
         Path agentOptsFile = controlDir.resolve("java-opts-20-java-agent");
 
+        Path envFile = controlDir.resolve("env");
+        if (!Files.exists(envFile)) {
+            logger.error("Env file not found at {}", envFile);
+        }
         String agentOptsFileData = "-javaagent:" +
                 cloudbeesJavaAgentJarFile +
-                "=sys_prop:" + controlDir.resolve("env");
+                "=sys_prop:" + envFile;
 
         Files.write(agentOptsFile, Collections.singleton(agentOptsFileData), Charsets.UTF_8);
     }
@@ -279,7 +283,9 @@ public class Setup {
         Path genappLibDir = genappDir.resolve("lib");
         Files.createDirectories(genappLibDir);
 
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/clickstackControlLib"), "cloudbees-jmx-invoker", genappLibDir);
+        Path jmxInvokerPath = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/control-lib"), "cloudbees-jmx-invoker", genappLibDir);
+        // create symlink without version to simplify jmx_invoker script
+        Files.createSymbolicLink(genappLibDir.resolve("cloudbees-jmx-invoker-jar-with-dependencies.jar"), jmxInvokerPath);
     }
 
     public Path findJava(Metadata metadata) {

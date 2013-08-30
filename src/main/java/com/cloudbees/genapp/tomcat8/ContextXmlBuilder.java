@@ -7,6 +7,8 @@ import com.cloudbees.genapp.metadata.resource.Email;
 import com.cloudbees.genapp.metadata.resource.Resource;
 import com.cloudbees.genapp.metadata.resource.SessionStore;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -19,6 +21,7 @@ import java.util.*;
 
 public class ContextXmlBuilder {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private Metadata metadata;
     private Set<String> databaseProperties = new HashSet(Arrays.asList("minIdle", "maxIdle", "maxActive", "maxWait",
             "initialSize",
@@ -38,6 +41,7 @@ public class ContextXmlBuilder {
     }
 
     protected ContextXmlBuilder addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
+        logger.info("Insert DataSource name={}, url={}", database.getName(), database.getUrl());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", "jdbc/" + database.getName());
         e.setAttribute("auth", "Container");
@@ -66,7 +70,7 @@ public class ContextXmlBuilder {
             if (databaseProperties.contains(entry.getKey())) {
                 e.setAttribute(entry.getKey(), entry.getValue());
             } else {
-                System.out.println("Ignore unknown datasource property '" + entry + "'");
+                logger.debug("Ignore unknown datasource property '{}'", entry);
             }
         }
 
@@ -75,6 +79,7 @@ public class ContextXmlBuilder {
     }
 
     protected ContextXmlBuilder addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
+        logger.info("add MailSession user={}", email.getUsername());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", email.getName());
         e.setAttribute("auth", "Container");
@@ -89,6 +94,7 @@ public class ContextXmlBuilder {
     }
 
     protected ContextXmlBuilder addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
+        logger.info("Add Memcache SessionStore");
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
         e.setAttribute("transcoderFactoryClass", "de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory");
@@ -110,9 +116,9 @@ public class ContextXmlBuilder {
         if (metadata.getRuntimeProperty(section) == null) {
             return this;
         }
-        System.out.println("Insert PrivateAppValve");
+        logger.info("Insert PrivateAppValve");
 
-        Set<String> privateAppProperties = new HashSet<String>(Arrays.asList(
+        Set<String> privateAppProperties = new HashSet<>(Arrays.asList(
                 "className", "secretKey",
                 "authenticationEntryPointName",
                 "authenticationParameterName", "authenticationHeaderName", "authenticationUri", "authenticationCookieName",
@@ -127,7 +133,7 @@ public class ContextXmlBuilder {
             if (privateAppProperties.contains(entry.getKey())) {
                 privateAppValve.setAttribute(entry.getKey(), entry.getValue());
             } else {
-                System.out.println("privateAppValve: ignore unknown property '" + entry.getKey() + "'");
+                logger.debug("privateAppValve: ignore unknown property '" + entry.getKey() + "'");
             }
 
         }
