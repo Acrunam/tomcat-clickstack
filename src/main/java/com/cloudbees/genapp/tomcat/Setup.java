@@ -77,11 +77,11 @@ public class Setup {
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
         Files2.chmodReadWrite(logDir);
 
-        this.catalinaHome = Files.createDirectories(appDir.resolve("home"));
+        this.catalinaHome = Files.createDirectories(appDir.resolve("catalina-home"));
 
-        this.catalinaBase = Files.createDirectories(appDir.resolve("base"));
+        this.catalinaBase = Files.createDirectories(appDir.resolve("catalina-base"));
 
-        this.agentLibDir = Files.createDirectories(catalinaHome.resolve("agent-lib"));
+        this.agentLibDir = Files.createDirectories(appDir.resolve("javaagent-lib"));
 
 
         this.tmpDir = Files.createDirectories(appDir.resolve("tmp"));
@@ -136,6 +136,7 @@ public class Setup {
 
 
         Setup setup = new Setup(appDir, clickstackDir, packageDir);
+        setup.installSkeleton();
         Path catalinaBase = setup.installCatalinaBase();
         setup.installCatalinaHome();
         setup.installCloudBeesJavaAgent();
@@ -147,6 +148,12 @@ public class Setup {
 
         ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
         contextXmlBuilder.buildTomcatConfigurationFiles(catalinaBase);
+    }
+
+    public void installSkeleton() throws IOException {
+        logger.debug("installSkeleton() {}", appDir);
+
+        Files2.copyDirectoryContent(clickstackDir.resolve("skeleton"), appDir);
     }
 
     public void installTomcatJavaOpts() throws IOException {
@@ -166,19 +173,18 @@ public class Setup {
     public void installCatalinaHome() throws Exception {
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
-        // echo "Installing tomcat"
-        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("package/deps/tomcat-package"), "tomcat", "zip");
+        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("deps/tomcat-package"), "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, catalinaHome);
-        // echo "Installing external libraries"
+
         Path targetLibDir = Files.createDirectories(catalinaHome.resolve("lib"));
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-mysql"), "mysql-connector-java", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-postgresql"), "postgresql", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-mysql"), "mysql-connector-java", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-postgresql"), "postgresql", targetLibDir);
 
         // Mail
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/tomcat-lib-mail"), "mail", targetLibDir);
+        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-mail"), "mail", targetLibDir);
 
         // Memcache
         // TODO once memcached-session-manager is available for tomcat
@@ -188,8 +194,6 @@ public class Setup {
 
     public Path installCatalinaBase() throws IOException {
         logger.debug("installCatalinaBase() {}", catalinaBase);
-
-        Files2.copyDirectoryContent(clickstackDir.resolve("package/tomcat/base"), catalinaBase);
 
         Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
         Files2.chmodReadWrite(workDir);
@@ -206,7 +210,7 @@ public class Setup {
     public void installJmxTransAgent() throws IOException {
         logger.debug("installJmxTransAgent() {}", agentLibDir);
 
-        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/java-agent-lib"), "jmxtrans-agent", agentLibDir);
+        Path jmxtransAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/javaagent-lib"), "jmxtrans-agent", agentLibDir);
         Path jmxtransAgentConfigurationFile = catalinaBase.resolve("conf/tomcat-metrics.xml");
         Preconditions.checkState(Files.exists(jmxtransAgentConfigurationFile), "File %s does not exist", jmxtransAgentConfigurationFile);
         Path jmxtransAgentDataFile = logDir.resolve("tomcat-metrics.data");
@@ -223,8 +227,8 @@ public class Setup {
     public void installCloudBeesJavaAgent() throws IOException {
         logger.debug("installCloudBeesJavaAgent() {}", agentLibDir);
 
-        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/java-agent-lib"), "cloudbees-clickstack-javaagent", this.agentLibDir);
-        Path agentOptsFile = controlDir.resolve("java-opts-20-java-agent");
+        Path cloudbeesJavaAgentJarFile = Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/javaagent-lib"), "cloudbees-clickstack-javaagent", this.agentLibDir);
+        Path agentOptsFile = controlDir.resolve("java-opts-20-javaagent");
 
         Path envFile = controlDir.resolve("env");
         if (!Files.exists(envFile)) {
@@ -280,13 +284,13 @@ public class Setup {
     public void installControlScripts() throws IOException {
         logger.debug("installControlScripts() {}", controlDir);
 
-        Files2.copyDirectoryContent(clickstackDir.resolve("package/script"), controlDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("skeleton/scripts"), controlDir);
         Files2.chmodReadExecute(controlDir);
 
         Path genappLibDir = genappDir.resolve("lib");
         Files.createDirectories(genappLibDir);
 
-        Path jmxInvokerPath = Files2.copyArtifactToDirectory(clickstackDir.resolve("package/deps/control-lib"), "cloudbees-jmx-invoker", genappLibDir);
+        Path jmxInvokerPath = Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/control-lib"), "cloudbees-jmx-invoker", genappLibDir);
         // create symlink without version to simplify jmx_invoker script
         Files.createSymbolicLink(genappLibDir.resolve("cloudbees-jmx-invoker-jar-with-dependencies.jar"), jmxInvokerPath);
     }

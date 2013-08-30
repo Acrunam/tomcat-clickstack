@@ -12,10 +12,6 @@ version = '1.0.0-SNAPSHOT'
 def tomcatVersion = "8.0.0-RC1"
 mainClassName = 'com.cloudbees.genapp.tomcat.Setup'
 
-startScripts {
-    applicationName = 'instantiateClickstack'
-}
-
 repositories {
     mavenCentral()
     maven {
@@ -27,7 +23,7 @@ repositories {
 configurations {
     clickstackPackage
 
-    clickstackRuntimeJavaAgent.ext.targetFolder = "java-agent-lib"
+    clickstackRuntimeJavaAgent.ext.targetFolder = "javaagent-lib"
 
     clickstackRuntime.ext.targetFolder = "tomcat-lib"
     clickstackRuntimePostgresql.ext.targetFolder = "tomcat-lib-postgresql"
@@ -97,7 +93,7 @@ task packageTomcat(dependsOn: 'prepareTomcatPackage', type: Zip) {
 }
 
 applicationDistribution.from(packageTomcat) {
-    into "package/deps/tomcat-package"
+    into "deps/tomcat-package"
 }
 
 task copyDependencies() << {
@@ -119,39 +115,33 @@ def copyDeps(configuration, targetFolder) {
         from configuration
     }
     applicationDistribution.from(workFolder) {
-        into "package/deps/" + targetFolder
+        into "deps/" + targetFolder
     }
 }
 
-task createSetupScript {
-    def scripts = file("$buildDir/tmp/scripts")
-    outputs.dir scripts
+task setupScript (dependsOn: 'startScripts') {
+    File setupFile = new File("$buildDir/scripts", "setup")
+    outputs.file setupFile
     doLast {
-        scripts.mkdirs()
         def text = """\
 #!/bin/bash
 cd \$(dirname \$0)
 export JAVA_HOME=/opt/java7
 export PATH=\$JAVA_HOME/bin:\$PATH
-exec bin/instantiateClickstack \$@
+exec bin/$applicationName \$@
 """
-        File file = new File(scripts, "setup")
-        file.write(text)
-        file.setExecutable(true, false)
-        return file
+        setupFile.write(text)
+        setupFile.setExecutable(true, false)
+        return setupFile
     }
 }
-applicationDistribution.from(createSetupScript) {
+applicationDistribution.from(setupScript) {
     into ""
 }
 
 
-applicationDistribution.from("src/main/tomcat") {
-    into "package/tomcat"
-}
-
-applicationDistribution.from("src/main/script") {
-    into "package/script"
+applicationDistribution.from("src/main/skeleton") {
+    into "skeleton"
 }
 
 task wrapper(type: Wrapper) {

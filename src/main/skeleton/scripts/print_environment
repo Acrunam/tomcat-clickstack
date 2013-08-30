@@ -6,7 +6,7 @@ set -u
 control_dir="$(dirname $0)"
 . "$control_dir/config"
 
-echo -e "\n##### BEGIN TOMCAT7 INFO #####"
+echo -e "\n##### BEGIN TOMCAT INFO #####"
 _dir=$(pwd)
 cd "$app_dir/.genapp/setup_status"
     for _file in *; do
@@ -15,12 +15,12 @@ cd "$app_dir/.genapp/setup_status"
     done
 cd "$_dir"
 echo -e "\n----- Context.xml file is: -----"
-cat "$app_dir/server/conf/context.xml"
+cat "$app_dir/catalina-base/conf/context.xml"
 echo -e "\n----- Env file is: -----"
 cat "$control_dir/env"
 echo -e "\n----- Config file is: -----"
 cat "$control_dir/config"
 echo -e "\n----- Metadata file is: -----"
 cat "$app_dir/.genapp/metadata.json"
-echo -e "\n##### END TOMCAT7 INFO #####"
+echo -e "\n##### END TOMCAT INFO #####"
 
