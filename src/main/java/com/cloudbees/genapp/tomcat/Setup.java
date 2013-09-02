@@ -49,7 +49,6 @@ public class Setup {
     public static final String DEFAULT_JAVA_VERSION = "1.7";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     final Path appDir;
-    Path catalinaHome;
     final Path genappDir;
     final Path controlDir;
     final Path clickstackDir;
@@ -58,6 +57,8 @@ public class Setup {
     final Path logDir;
     final Path tmpDir;
     final Path agentLibDir;
+    final Path appExtraFilesDir;
+    Path catalinaHome;
 
     /**
      * @param appDir        parent folder of the instantiated app with {@code catalina.home}, {@code catalina.base}, ...
@@ -81,7 +82,6 @@ public class Setup {
 
         this.agentLibDir = Files.createDirectories(appDir.resolve("javaagent-lib"));
 
-
         this.tmpDir = Files.createDirectories(appDir.resolve("tmp"));
         Files2.chmodReadWrite(tmpDir);
 
@@ -91,11 +91,15 @@ public class Setup {
         this.warFile = packageDir.resolve("app.war");
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
 
+        this.appExtraFilesDir = Files.createDirectories(appDir.resolve("app-extra-files"));
+        Files2.chmodReadWrite(appExtraFilesDir);
+
         logger.debug("warFile: {}", warFile.toAbsolutePath());
         logger.debug("tmpDir: {}", tmpDir.toAbsolutePath());
         logger.debug("genappDir: {}", genappDir.toAbsolutePath());
         logger.debug("catalinaBase: {}", catalinaBase.toAbsolutePath());
         logger.debug("agentLibDir: {}", agentLibDir.toAbsolutePath());
+        logger.debug("appExtraFilesDir: {}", appExtraFilesDir.toAbsolutePath());
     }
 
     private static void setSystemPropertyIfNotDefined(String systemPropertyName, String value) {
@@ -161,6 +165,7 @@ public class Setup {
                 "-Djava.io.tmpdir=\"" + tmpDir + "\" " +
                 "-Dcatalina.home=\"" + catalinaHome + "\" " +
                 "-Dcatalina.base=\"" + catalinaBase + "\" " +
+                "-Dapp_extra_files=\"" + appExtraFilesDir + "\" " +
                 "-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager " +
                 "-Djava.util.logging.config.file=\"" + catalinaBase + "/conf/logging.properties\"";
 
@@ -174,7 +179,7 @@ public class Setup {
         catalinaHome = Files2.findUniqueFolderBeginningWith(appDir, "apache-tomcat");
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
-        Path targetLibDir = Files.createDirectories(catalinaHome.resolve("lib"));
+        Path targetLibDir = Files.createDirectories(catalinaBase.resolve("lib"));
         Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
@@ -202,6 +207,19 @@ public class Setup {
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
         Files2.chmodReadWrite(rootWebAppDir);
+
+        Path webAppBundledExtraFiles = rootWebAppDir.resolve("META-INF/extra-files");
+        if (Files.exists(webAppBundledExtraFiles) && Files.isDirectory(webAppBundledExtraFiles)) {
+            logger.info("Copy application provided extra files");
+            Files2.copyDirectoryContent(webAppBundledExtraFiles, this.appExtraFilesDir);
+        }
+
+        Path webAppBundledExtraLibs = rootWebAppDir.resolve("META-INF/lib");
+        if (Files.exists(webAppBundledExtraLibs) && Files.isDirectory(webAppBundledExtraLibs)) {
+            logger.info("Copy application provided extra libs");
+            Files2.copyDirectoryContent(webAppBundledExtraLibs, this.catalinaBase.resolve("lib"));
+        }
+
         return catalinaBase;
     }
 
