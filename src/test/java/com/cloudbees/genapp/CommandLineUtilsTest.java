@@ -52,7 +52,7 @@ public class CommandLineUtilsTest {
 
         Properties props = new Properties();
         props.setProperty("genapp_dir", "/tmp/genapp_dir");
-        System.setProperties(props);
+        System.getProperties().putAll(props);
         try {
             assertThat(getOption("genapp_dir", args), is("/tmp/genapp_dir"));
         } finally {
@@ -72,7 +72,7 @@ public class CommandLineUtilsTest {
 
         Properties props = new Properties();
         props.setProperty("genapp_dir", "/tmp/genapp_dir");
-        System.setProperties(props);
+        System.getProperties().putAll(props);
         try {
             assertThat(getOption("app_dir", args), is("/tmp/app_dir"));
             assertThat(getOption("app_port", args), is("8080"));
