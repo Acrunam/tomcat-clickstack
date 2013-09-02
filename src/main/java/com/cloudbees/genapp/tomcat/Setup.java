@@ -49,7 +49,7 @@ public class Setup {
     public static final String DEFAULT_JAVA_VERSION = "1.7";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     final Path appDir;
-    final Path catalinaHome;
+    Path catalinaHome;
     final Path genappDir;
     final Path controlDir;
     final Path clickstackDir;
@@ -77,8 +77,6 @@ public class Setup {
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
         Files2.chmodReadWrite(logDir);
 
-        this.catalinaHome = Files.createDirectories(appDir.resolve("catalina-home"));
-
         this.catalinaBase = Files.createDirectories(appDir.resolve("catalina-base"));
 
         this.agentLibDir = Files.createDirectories(appDir.resolve("javaagent-lib"));
@@ -96,7 +94,6 @@ public class Setup {
         logger.debug("warFile: {}", warFile.toAbsolutePath());
         logger.debug("tmpDir: {}", tmpDir.toAbsolutePath());
         logger.debug("genappDir: {}", genappDir.toAbsolutePath());
-        logger.debug("catalinaHome: {}", catalinaHome.toAbsolutePath());
         logger.debug("catalinaBase: {}", catalinaBase.toAbsolutePath());
         logger.debug("agentLibDir: {}", agentLibDir.toAbsolutePath());
     }
@@ -136,9 +133,9 @@ public class Setup {
 
 
         Setup setup = new Setup(appDir, clickstackDir, packageDir);
+        setup.installCatalinaHome();
         setup.installSkeleton();
         Path catalinaBase = setup.installCatalinaBase();
-        setup.installCatalinaHome();
         setup.installCloudBeesJavaAgent();
         setup.installJmxTransAgent();
         setup.writeJavaOpts(metadata);
@@ -153,7 +150,7 @@ public class Setup {
     public void installSkeleton() throws IOException {
         logger.debug("installSkeleton() {}", appDir);
 
-        Files2.copyDirectoryContent(clickstackDir.resolve("skeleton"), appDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("dist"), appDir);
     }
 
     public void installTomcatJavaOpts() throws IOException {
@@ -171,10 +168,11 @@ public class Setup {
     }
 
     public void installCatalinaHome() throws Exception {
-        logger.debug("installCatalinaHome() {}", catalinaHome);
 
-        Path tomcatPackagePath = Files2.findArtifact(clickstackDir.resolve("deps/tomcat-package"), "tomcat", "zip");
-        Files2.unzip(tomcatPackagePath, catalinaHome);
+        Path tomcatPackagePath = Files2.findArtifact(clickstackDir, "tomcat", "zip");
+        Files2.unzip(tomcatPackagePath, appDir);
+        catalinaHome = Files2.findUniqueFolderBeginningWith(appDir, "apache-tomcat");
+        logger.debug("installCatalinaHome() {}", catalinaHome);
 
         Path targetLibDir = Files.createDirectories(catalinaHome.resolve("lib"));
         Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
@@ -284,7 +282,7 @@ public class Setup {
     public void installControlScripts() throws IOException {
         logger.debug("installControlScripts() {}", controlDir);
 
-        Files2.copyDirectoryContent(clickstackDir.resolve("skeleton/scripts"), controlDir);
+        // Files2.copyDirectoryContent(clickstackDir.resolve("dist/scripts"), controlDir);
         Files2.chmodReadExecute(controlDir);
 
         Path genappLibDir = genappDir.resolve("lib");

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
@@ -271,8 +272,34 @@ public class Files2 {
     }
 
     @Nonnull
+    public static Path findUniqueFolderBeginningWith(@Nonnull Path source, @Nullable final String pattern) throws IOException, NoSuchElementException, IllegalStateException {
+        Preconditions.checkArgument(Files.isDirectory(source), "Source %s is not a directory", source.toAbsolutePath());
+
+        DirectoryStream<Path> paths = Files.newDirectoryStream(source, new DirectoryStream.Filter<Path>() {
+            @Override
+            public boolean accept(Path entry) throws IOException {
+                String fileName = entry.getFileName().toString();
+                if (pattern == null) {
+                    return true;
+                } else if (fileName.startsWith(pattern)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+        try {
+            return Iterables.getOnlyElement(paths);
+        } catch (NoSuchElementException e) {
+            throw new IllegalStateException("Folder beginning with '" + pattern + "' not found in path: " + source + ", absolutePath: " + source.toAbsolutePath());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("More than 1 folder beginning with '" + pattern + "' found in path: " + source + ", absolutePath: " + source.toAbsolutePath() + " -> " + paths);
+        }
+    }
+
+    @Nonnull
     public static Path findArtifact(@Nonnull Path source, @Nonnull final String artifactId, @Nonnull final String type) throws IOException {
-        Preconditions.checkArgument(Files.isDirectory(source), "Dest %s is not a directory", source.toAbsolutePath());
+        Preconditions.checkArgument(Files.isDirectory(source), "Source %s is not a directory", source.toAbsolutePath());
 
         DirectoryStream<Path> paths = Files.newDirectoryStream(source, new DirectoryStream.Filter<Path>() {
             @Override
