@@ -230,14 +230,14 @@ public class Files2 {
         }
     }
 
-    public static void copyDirectoryContent(final Path fromPath, final Path toPath) throws IOException {
-        logger.trace("Copy from {} to {}", fromPath, toPath);
+    public static void copyDirectoryContent(final Path fromDir, final Path toDir) throws IOException {
+        logger.trace("Copy from {} to {}", fromDir, toDir);
 
         FileVisitor<Path> copyDirVisitor = new SimpleFileVisitor<Path>() {
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                Path targetPath = toPath.resolve(fromPath.relativize(dir));
+                Path targetPath = toDir.resolve(fromDir.relativize(dir));
                 if (!Files.exists(targetPath)) {
                     Files.createDirectory(targetPath);
                 }
@@ -246,12 +246,12 @@ public class Files2 {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.copy(file, toPath.resolve(fromPath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(file, toDir.resolve(fromDir.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
                 return FileVisitResult.CONTINUE;
             }
         };
 
-        Files.walkFileTree(fromPath, copyDirVisitor);
+        Files.walkFileTree(fromDir, copyDirVisitor);
     }
 
     @Nonnull
