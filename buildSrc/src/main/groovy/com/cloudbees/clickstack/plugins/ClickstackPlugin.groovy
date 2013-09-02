@@ -89,7 +89,8 @@ class ClickstackPlugin implements Plugin<Project> {
         archiveTask.description = "Bundles the project as a JVM application with libs and OS specific scripts."
         archiveTask.group = CLICKSTACK_GROUP
         archiveTask.conventionMapping.baseName = { pluginConvention.clickstackName }
-        def baseDir = { archiveTask.archiveName - ".${archiveTask.extension}" }
+        // def baseDir = { archiveTask.archiveName - ".${archiveTask.extension}" }
+        def baseDir = ""
         archiveTask.into(baseDir) {
             with(pluginConvention.clickstackDistribution)
         }
