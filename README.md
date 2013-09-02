@@ -11,7 +11,7 @@ Tomcat 8 ClickStack for CloudBees PaaS.
 
 # Build 
 
-    $  gradlew clean installApp distZip
+    $  gradlew clean installClickstack distClickstack
 
 After successful build tomcat8-plugin.zip is created and can be uploaded to the CloudBees platform location by the CloudBees team.
 
