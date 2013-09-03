@@ -18,23 +18,27 @@ package com.cloudbees.genapp.tomcat;
 import com.cloudbees.genapp.CommandLineUtils;
 import com.cloudbees.genapp.Files2;
 import com.cloudbees.genapp.metadata.Metadata;
+import com.cloudbees.genapp.metadata.resource.Database;
+import com.cloudbees.genapp.metadata.resource.Email;
+import com.cloudbees.genapp.metadata.resource.Resource;
+import com.cloudbees.genapp.metadata.resource.SessionStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.SimpleLogger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class Setup {
     static {
@@ -137,7 +141,7 @@ public class Setup {
 
 
         Setup setup = new Setup(appDir, clickstackDir, packageDir);
-        setup.installCatalinaHome();
+        setup.installCatalinaHome(metadata);
         setup.installSkeleton();
         Path catalinaBase = setup.installCatalinaBase();
         setup.installCloudBeesJavaAgent();
@@ -172,7 +176,7 @@ public class Setup {
         Files.write(optsFile, Collections.singleton(opts), Charsets.UTF_8);
     }
 
-    public void installCatalinaHome() throws Exception {
+    public void installCatalinaHome(Metadata metadata) throws Exception {
 
         Path tomcatPackagePath = Files2.findArtifact(clickstackDir, "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, appDir);
@@ -183,14 +187,38 @@ public class Setup {
         Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
-        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mysql"), targetLibDir);
-        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-postgresql"), targetLibDir);
+        Collection<Database> mysqlDatabases = Collections2.filter(metadata.getResources(Database.class), new Predicate<Database>() {
+            @Override
+            public boolean apply(@Nullable Database database) {
+                return Database.DRIVER_MYSQL.equals(database.getDriver());
+            }
+        });
+        if (!mysqlDatabases.isEmpty()) {
+            logger.debug("Add mysql jars");
+            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mysql"), targetLibDir);
+        }
+
+        Collection<Database> postgresqlDatabases = Collections2.filter(metadata.getResources(Database.class), new Predicate<Database>() {
+            @Override
+            public boolean apply(@Nullable Database database) {
+                return Database.DRIVER_POSTGRES.equals(database.getDriver());
+            }
+        });
+        if (!postgresqlDatabases.isEmpty()) {
+            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-postgresql"), targetLibDir);
+        }
 
         // Mail
-        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mail"), targetLibDir);
+        if (!metadata.getResources(Email.class).isEmpty()) {
+            logger.debug("Add mail jars");
+            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mail"), targetLibDir);
+        }
 
         // Memcache
-        // Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-memcache"), targetLibDir);
+        if (!metadata.getResources(SessionStore.class).isEmpty()) {
+            logger.debug("Add memcache jars");
+            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-memcache"), targetLibDir);
+        }
 
         Files2.chmodReadOnly(catalinaHome);
     }

@@ -20,6 +20,9 @@ import com.cloudbees.genapp.Strings2;
 import com.cloudbees.genapp.metadata.resource.*;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -59,12 +62,25 @@ public class Metadata {
         this.runtimeProperties = new HashMap<>();
     }
 
+    @Nonnull
     public <R extends Resource> R getResource(String resourceName) {
         return (R) resources.get(resourceName);
     }
 
+    @Nonnull
     public Map<String, Resource> getResources() {
         return resources;
+    }
+
+    @Nonnull
+    public <R extends Resource>  Collection<R> getResources(final Class<R> type) {
+
+        return (Collection<R>) Collections2.filter(resources.values(), new Predicate<Resource>() {
+            @Override
+            public boolean apply(@Nullable Resource r) {
+                return type.isAssignableFrom(r.getClass());
+            }
+        });
     }
 
     public String getEnvironmentVariable(String variableName) {

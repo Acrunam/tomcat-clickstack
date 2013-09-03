@@ -17,12 +17,14 @@ package com.cloudbees.genapp.metadata;
 
 import static org.hamcrest.CoreMatchers.*;
 
+import com.cloudbees.genapp.metadata.resource.Database;
 import org.hamcrest.collection.IsMapContaining;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -56,5 +58,14 @@ public class MetadataTest {
 
         Map<String, String> environment = metadata.getEnvironment();
         Assert.assertThat(environment, equalTo(expected));
+    }
+
+    @Test
+    public void testGetResourceByType() throws IOException {
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("metadata-1.json");
+        Metadata metadata = Metadata.Builder.fromStream(in);
+
+        Collection<Database> databases = metadata.getResources(Database.class);
+        Assert.assertThat(databases.size(), equalTo(1));
     }
 }
