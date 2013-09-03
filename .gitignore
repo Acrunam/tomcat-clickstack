@@ -1,16 +1,18 @@
+# Mac
 .DS_Store
+
+# eclipse
 .classpath
 .project
 .settings
+
+# gradle
 .gradle
-*.iml
-.idea
-/lib
-/tomcat8-plugin.zip
-/pkg
-/s3cfg
-target
 build
 
-/clickstack-assembly
+# intellij
+out
+.idea
+*.iml
+
 
