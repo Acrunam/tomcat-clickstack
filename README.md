@@ -32,11 +32,3 @@ Note: You should be familiar with developing ClickStacks using the genapp system
 Once the plugin is published to a public URL, you can update an app to use it with the CloudBees SDK:
 
     $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_ZIP PATH_TO_WARFILE
-
-
-## TODOs`
-
-- [ ] support `$war_home/META-INF/server.xml` overlays of `$catalina_base/conf/server.xml`. Then do the same for `logging.properties`, `context.xml` and `web.xml`
-- [ ] support `$war_home/META-INF/lib/` to add jars to Tomcat classpath
-- [ ] support `$war_home/META-INF/extra-files/` to add jars to `$app_extra_files/`
-
