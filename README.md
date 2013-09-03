@@ -44,6 +44,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
 # Key concepts
 
 
+* `build.gradle` : the gradle build to create the clickstack
 * `com.cloudbees.clickstack.tomcat.Setup`: the setup code that instantiate the clickstack
 
 
