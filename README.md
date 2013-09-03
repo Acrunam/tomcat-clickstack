@@ -296,30 +296,13 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
 │   ├── logs
 │   ├── webapps
 │   │   └── ROOT
-│   │       ├── META-INF
-│   │       │   ├── MANIFEST.MF
-│   │       │   └── maven
-│   │       │       └── localdomain.localhost
-│   │       │           └── tomcat7-maven-clickstart
-│   │       │               ├── pom.properties
-│   │       │               └── pom.xml
 │   │       ├── WEB-INF
 │   │       │   ├── classes
-│   │       │   │   └── localdomain
-│   │       │   │       └── localhost
-│   │       │   │           └── MyServlet.class
+│   │       │   │   └── *.class
 │   │       │   ├── lib
-│   │       │   │   ├── javax.servlet.jsp.jstl-1.2.2.jar
-│   │       │   │   ├── javax.servlet.jsp.jstl-api-1.2.1.jar
-│   │       │   │   └── mysql-connector-java-5.1.24.jar
+│   │       │   │   └── *.jar
 │   │       │   └── web.xml
-│   │       ├── datasource-jstl.jsp
-│   │       ├── datasource.jsp
-│   │       ├── index.jsp
-│   │       ├── jmx
-│   │       │   ├── mbean.jsp
-│   │       │   └── mbeans.jsp
-│   │       └── parameters.jsp
+│   │       └── *.jsp ...
 │   └── work
 ├── javaagent-lib
 │   ├── cloudbees-clickstack-javaagent-1.2.0.jar
