@@ -183,14 +183,14 @@ public class Setup {
         Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
         // JDBC Drivers
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-mysql"), "mysql-connector-java", targetLibDir);
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-postgresql"), "postgresql", targetLibDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mysql"), targetLibDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-postgresql"), targetLibDir);
 
         // Mail
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib-mail"), "mail", targetLibDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mail"), targetLibDir);
 
         // Memcache
-        // TODO once memcached-session-manager is available for tomcat
+        // Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-memcache"), targetLibDir);
 
         Files2.chmodReadOnly(catalinaHome);
     }
@@ -207,6 +207,14 @@ public class Setup {
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
         Files2.chmodReadWrite(rootWebAppDir);
+
+        Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
+        Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
+        if (Files.exists(webAppBundledServerXmlFile) && !Files.isDirectory(webAppBundledServerXmlFile)) {
+            logger.info("Copy application provided server.xml");
+            Files.move(catalinaBaseServerXml, catalinaBase.resolve("conf/server-initial.xml"));
+            Files.copy(webAppBundledServerXmlFile, catalinaBaseServerXml);
+        }
 
         Path webAppBundledExtraFiles = rootWebAppDir.resolve("META-INF/extra-files");
         if (Files.exists(webAppBundledExtraFiles) && Files.isDirectory(webAppBundledExtraFiles)) {
