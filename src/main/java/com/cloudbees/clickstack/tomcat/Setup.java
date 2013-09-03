@@ -13,72 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudbees.genapp.tomcat;
+package com.cloudbees.clickstack.tomcat;
 
-import com.cloudbees.genapp.CommandLineUtils;
-import com.cloudbees.genapp.Files2;
-import com.cloudbees.genapp.metadata.Metadata;
-import com.cloudbees.genapp.metadata.resource.Database;
-import com.cloudbees.genapp.metadata.resource.Email;
-import com.cloudbees.genapp.metadata.resource.Resource;
-import com.cloudbees.genapp.metadata.resource.SessionStore;
+import com.cloudbees.clickstack.domain.environment.Environment;
+import com.cloudbees.clickstack.domain.metadata.Database;
+import com.cloudbees.clickstack.domain.metadata.Email;
+import com.cloudbees.clickstack.domain.metadata.Metadata;
+import com.cloudbees.clickstack.domain.metadata.SessionStore;
+import com.cloudbees.clickstack.util.CommandLineUtils;
+import com.cloudbees.clickstack.util.Files2;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.SimpleLogger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 public class Setup {
-    static {
-        // configure Logback SimpleLogger
-        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_DATE_TIME_KEY, "true");
-        setSystemPropertyIfNotDefined(SimpleLogger.DATE_TIME_FORMAT_KEY, "yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        setSystemPropertyIfNotDefined(SimpleLogger.LOG_FILE_KEY, "System.out");
-        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_LOG_NAME_KEY, "false");
-        setSystemPropertyIfNotDefined(SimpleLogger.SHOW_THREAD_NAME_KEY, "false");
-    }
 
-    public static final String DEFAULT_JAVA_VERSION = "1.7";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    @Nonnull
     final Path appDir;
+    @Nonnull
     final Path genappDir;
+    @Nonnull
     final Path controlDir;
+    @Nonnull
     final Path clickstackDir;
+    @Nonnull
     final Path catalinaBase;
+    @Nonnull
     final Path warFile;
+    @Nonnull
     final Path logDir;
+    @Nonnull
     final Path tmpDir;
+    @Nonnull
     final Path agentLibDir;
+    @Nonnull
     final Path appExtraFilesDir;
+    @Nonnull
+    final Metadata metadata;
+    @Nonnull
+    final Environment env;
+    /**
+     * initialised by {@link #installCatalinaHome()}
+     */
+    @Nullable
     Path catalinaHome;
 
-    /**
-     * @param appDir        parent folder of the instantiated app with {@code catalina.home}, {@code catalina.base}, ...
-     * @param clickstackDir parent folder of the tomcat-clickstack
-     * @param packageDir    parent folder of {@code app.war}
-     */
-    public Setup(@Nonnull Path appDir, @Nonnull Path clickstackDir, @Nonnull Path packageDir) throws IOException {
-        logger.info("clickstackDir: {}", clickstackDir.toAbsolutePath());
-        logger.info("appDir: {}", appDir.toAbsolutePath());
-        logger.info("packageDir: {}", packageDir.toAbsolutePath());
 
-        this.appDir = appDir;
+    public Setup(@Nonnull Environment env, @Nonnull Metadata metadata) throws IOException {
+        logger.info("Setup: {}, {}", env, metadata);
 
-        this.genappDir = Files.createDirectories(appDir.resolve(".genapp"));
+        this.env = env;
+        this.appDir = env.appDir;
 
-        this.controlDir = Files.createDirectories(genappDir.resolve("control"));
+        this.genappDir = env.genappDir;
+
+        this.controlDir = env.controlDir;
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
         Files2.chmodReadWrite(logDir);
 
@@ -89,70 +92,49 @@ public class Setup {
         this.tmpDir = Files.createDirectories(appDir.resolve("tmp"));
         Files2.chmodReadWrite(tmpDir);
 
-        this.clickstackDir = clickstackDir;
+        this.clickstackDir = env.clickstackDir;
         Preconditions.checkState(Files.exists(clickstackDir) && Files.isDirectory(clickstackDir));
 
-        this.warFile = packageDir.resolve("app.war");
+        this.warFile = env.packageDir.resolve("app.war");
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
 
         this.appExtraFilesDir = Files.createDirectories(appDir.resolve("app-extra-files"));
         Files2.chmodReadWrite(appExtraFilesDir);
 
+        this.metadata = metadata;
+
         logger.debug("warFile: {}", warFile.toAbsolutePath());
-        logger.debug("tmpDir: {}", tmpDir.toAbsolutePath());
-        logger.debug("genappDir: {}", genappDir.toAbsolutePath());
         logger.debug("catalinaBase: {}", catalinaBase.toAbsolutePath());
         logger.debug("agentLibDir: {}", agentLibDir.toAbsolutePath());
         logger.debug("appExtraFilesDir: {}", appExtraFilesDir.toAbsolutePath());
     }
 
-    private static void setSystemPropertyIfNotDefined(String systemPropertyName, String value) {
-        if (!System.getProperties().contains(systemPropertyName))
-            System.setProperty(systemPropertyName, value);
-    }
-
     public static void main(String[] args) throws Exception {
-        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
         Logger initialisationLogger = LoggerFactory.getLogger(Setup.class);
 
-        FileSystem fs = FileSystems.getDefault();
-        initialisationLogger.info("Start setup, current dir {}", fs.getPath(".").toAbsolutePath());
-
-        Path appDir = fs.getPath(CommandLineUtils.getOption("app_dir", args));
-        Path clickstackDir;
-        try {
-            clickstackDir = fs.getPath(CommandLineUtils.getOption("plugin_dir", args));
-        } catch (NoSuchElementException e) {
-            clickstackDir = fs.getPath(".");
-            initialisationLogger.info("'plugin_dir' param not defined, default to '.': {}", clickstackDir.toAbsolutePath());
-        }
-        Path packageDir = fs.getPath(CommandLineUtils.getOption("pkg_dir", args));
-        String appPort = CommandLineUtils.getOption("app_port", args);
-        Path genappDir;
-        try {
-            genappDir = fs.getPath(CommandLineUtils.getOption("genapp_dir", args));
-        } catch (NoSuchElementException e) {
-            genappDir = packageDir.resolve(".genapp");
-            initialisationLogger.info("'genapp_dir' param not defined, infer from 'pkg_dir': {}", genappDir.toAbsolutePath());
-        }
-        Path metadataPath = genappDir.resolve("metadata.json");
-
+        initialisationLogger.info("Start setup, current dir {}", FileSystems.getDefault().getPath(".").toAbsolutePath());
+        Environment env = CommandLineUtils.argumentsToEnvironment(args);
+        Path metadataPath = env.genappDir.resolve("metadata.json");
         Metadata metadata = Metadata.Builder.fromFile(metadataPath);
 
+        Setup setup = new Setup(env, metadata);
+        setup.setup();
+    }
 
-        Setup setup = new Setup(appDir, clickstackDir, packageDir);
-        setup.installCatalinaHome(metadata);
-        setup.installSkeleton();
-        Path catalinaBase = setup.installCatalinaBase();
-        setup.installCloudBeesJavaAgent();
-        setup.installJmxTransAgent();
-        setup.writeJavaOpts(metadata);
-        setup.writeConfig(metadata, appPort);
-        setup.installControlScripts();
-        setup.installTomcatJavaOpts();
+    public void setup() throws Exception {
+        installCatalinaHome();
+        installSkeleton();
+        Path catalinaBase = installCatalinaBase();
+        installCloudBeesJavaAgent();
+        installJmxTransAgent();
+        writeJavaOpts();
+        writeConfig();
+        installControlScripts();
+        installTomcatJavaOpts();
 
         ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
         contextXmlBuilder.buildTomcatConfigurationFiles(catalinaBase);
+        logger.info("Clickstack successfully installed");
     }
 
     public void installSkeleton() throws IOException {
@@ -176,7 +158,7 @@ public class Setup {
         Files.write(optsFile, Collections.singleton(opts), Charsets.UTF_8);
     }
 
-    public void installCatalinaHome(Metadata metadata) throws Exception {
+    public void installCatalinaHome() throws Exception {
 
         Path tomcatPackagePath = Files2.findArtifact(clickstackDir, "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, appDir);
@@ -293,7 +275,7 @@ public class Setup {
         Files.write(agentOptsFile, Collections.singleton(agentOptsFileData), Charsets.UTF_8);
     }
 
-    public void writeJavaOpts(Metadata metadata) throws IOException {
+    public void writeJavaOpts() throws IOException {
         Path javaOptsFile = controlDir.resolve("java-opts-10-core");
         logger.debug("writeJavaOpts() {}", javaOptsFile);
 
@@ -301,7 +283,7 @@ public class Setup {
         Files.write(javaOptsFile, Collections.singleton(javaOpts), Charsets.UTF_8);
     }
 
-    public void writeConfig(Metadata metadata, String appPort) throws IOException {
+    public void writeConfig() throws IOException {
 
         Path configFile = controlDir.resolve("config");
         logger.debug("writeConfig() {}", configFile);
@@ -314,15 +296,15 @@ public class Setup {
         writer.println("catalina_home=\"" + catalinaHome + "\"");
         writer.println("catalina_base=\"" + catalinaBase + "\"");
 
-        writer.println("port=" + appPort);
+        writer.println("port=" + env.appPort);
 
-        Path javaPath = findJava(metadata);
+        Path javaPath = metadata.getJavaExecutable();
         writer.println("java=\"" + javaPath + "\"");
-        Path javaHome = findJavaHome(metadata);
+        Path javaHome = metadata.getJavaHome();
         writer.println("JAVA_HOME=\"" + javaHome + "\"");
         writer.println("genapp_dir=\"" + genappDir + "\"");
 
-        writer.println("catalina_opts=\"-Dport.http=" + appPort + "\"");
+        writer.println("catalina_opts=\"-Dport.http=" + env.appPort + "\"");
 
         String classpath = "" +
                 catalinaHome.resolve("bin/bootstrap.jar") + ":" +
@@ -345,30 +327,5 @@ public class Setup {
         Path jmxInvokerPath = Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/control-lib"), "cloudbees-jmx-invoker", genappLibDir);
         // create symlink without version to simplify jmx_invoker script
         Files.createSymbolicLink(genappLibDir.resolve("cloudbees-jmx-invoker-jar-with-dependencies.jar"), jmxInvokerPath);
-    }
-
-    public Path findJava(Metadata metadata) {
-        Path javaPath = findJavaHome(metadata).resolve("bin/java");
-        Preconditions.checkState(Files.exists(javaPath), "Java executable %s does not exist");
-        Preconditions.checkState(!Files.isDirectory(javaPath), "Java executable %s is not a file");
-
-        return javaPath;
-    }
-
-    public Path findJavaHome(Metadata metadata) {
-        String javaVersion = metadata.getRuntimeParameter("java", "version", DEFAULT_JAVA_VERSION);
-        Map<String, String> javaHomePerVersion = new HashMap<>();
-        javaHomePerVersion.put("1.6", "/opt/java6");
-        javaHomePerVersion.put("1.7", "/opt/java7");
-        javaHomePerVersion.put("1.8", "/opt/java8");
-
-        String javaHome = javaHomePerVersion.get(javaVersion);
-        if (javaHome == null) {
-            javaHome = javaHomePerVersion.get(DEFAULT_JAVA_VERSION);
-        }
-        Path javaHomePath = FileSystems.getDefault().getPath(javaHome);
-        Preconditions.checkState(Files.exists(javaHomePath), "JavaHome %s does not exist");
-        Preconditions.checkState(Files.isDirectory(javaHomePath), "JavaHome %s is not a directory");
-        return javaHomePath;
     }
 }

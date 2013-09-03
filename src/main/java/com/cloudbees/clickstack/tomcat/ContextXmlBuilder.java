@@ -1,11 +1,11 @@
-package com.cloudbees.genapp.tomcat;
+package com.cloudbees.clickstack.tomcat;
 
-import com.cloudbees.genapp.XmlUtils;
-import com.cloudbees.genapp.metadata.Metadata;
-import com.cloudbees.genapp.metadata.resource.Database;
-import com.cloudbees.genapp.metadata.resource.Email;
-import com.cloudbees.genapp.metadata.resource.Resource;
-import com.cloudbees.genapp.metadata.resource.SessionStore;
+import com.cloudbees.clickstack.domain.metadata.Metadata;
+import com.cloudbees.clickstack.domain.metadata.Database;
+import com.cloudbees.clickstack.domain.metadata.Email;
+import com.cloudbees.clickstack.domain.metadata.Resource;
+import com.cloudbees.clickstack.domain.metadata.SessionStore;
+import com.cloudbees.clickstack.util.XmlUtils;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ public class ContextXmlBuilder {
     }
 
     protected ContextXmlBuilder addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
-        logger.info("Insert DataSource name={}, url={}", database.getName(), database.getUrl());
+        logger.info("Add DataSource name={}, url={}", database.getName(), database.getUrl());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", "jdbc/" + database.getName());
         e.setAttribute("auth", "Container");
@@ -79,7 +79,7 @@ public class ContextXmlBuilder {
     }
 
     protected ContextXmlBuilder addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
-        logger.info("add MailSession user={}", email.getUsername());
+        logger.info("Add MailSession user={}", email.getUsername());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", email.getName());
         e.setAttribute("auth", "Container");
@@ -116,7 +116,7 @@ public class ContextXmlBuilder {
         if (metadata.getRuntimeProperty(section) == null) {
             return this;
         }
-        logger.info("Insert PrivateAppValve");
+        logger.info("Add PrivateAppValve");
 
         Set<String> privateAppProperties = new HashSet<>(Arrays.asList(
                 "className", "secretKey",

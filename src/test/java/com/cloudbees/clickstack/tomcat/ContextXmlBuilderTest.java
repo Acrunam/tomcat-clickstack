@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudbees.genapp.tomcat;
+package com.cloudbees.clickstack.tomcat;
 
-import static org.junit.Assert.*;
-import static org.xmlmatchers.XmlMatchers.*;
-import static org.xmlmatchers.transform.XmlConverters.*;
-
-import com.cloudbees.genapp.XmlUtils;
-import com.cloudbees.genapp.metadata.Metadata;
-import com.cloudbees.genapp.metadata.resource.Database;
-import com.cloudbees.genapp.metadata.resource.Email;
-import com.cloudbees.genapp.metadata.resource.SessionStore;
+import com.cloudbees.clickstack.domain.metadata.Metadata;
+import com.cloudbees.clickstack.util.XmlUtils;
+import com.cloudbees.clickstack.domain.metadata.Database;
+import com.cloudbees.clickstack.domain.metadata.Email;
+import com.cloudbees.clickstack.domain.metadata.SessionStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
+
+import static org.junit.Assert.assertThat;
+import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
+import static org.xmlmatchers.transform.XmlConverters.the;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
