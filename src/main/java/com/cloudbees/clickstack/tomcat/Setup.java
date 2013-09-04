@@ -83,14 +83,14 @@ public class Setup {
 
         this.controlDir = env.controlDir;
         this.logDir = Files.createDirectories(genappDir.resolve("log"));
-        Files2.chmodReadWrite(logDir);
+        Files2.chmodAddReadWrite(logDir);
 
         this.catalinaBase = Files.createDirectories(appDir.resolve("catalina-base"));
 
         this.agentLibDir = Files.createDirectories(appDir.resolve("javaagent-lib"));
 
         this.tmpDir = Files.createDirectories(appDir.resolve("tmp"));
-        Files2.chmodReadWrite(tmpDir);
+        Files2.chmodAddReadWrite(tmpDir);
 
         this.clickstackDir = env.clickstackDir;
         Preconditions.checkState(Files.exists(clickstackDir) && Files.isDirectory(clickstackDir));
@@ -99,7 +99,7 @@ public class Setup {
         Preconditions.checkState(Files.exists(warFile) && !Files.isDirectory(warFile));
 
         this.appExtraFilesDir = Files.createDirectories(appDir.resolve("app-extra-files"));
-        Files2.chmodReadWrite(appExtraFilesDir);
+        Files2.chmodAddReadWrite(appExtraFilesDir);
 
         this.metadata = metadata;
 
@@ -209,14 +209,14 @@ public class Setup {
         logger.debug("installCatalinaBase() {}", catalinaBase);
 
         Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
-        Files2.chmodReadWrite(workDir);
+        Files2.chmodAddReadWrite(workDir);
 
         Path logsDir = Files.createDirectories(catalinaBase.resolve("logs"));
-        Files2.chmodReadWrite(logsDir);
+        Files2.chmodAddReadWrite(logsDir);
 
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
-        Files2.chmodReadWrite(rootWebAppDir);
+        Files2.chmodAddReadWrite(rootWebAppDir);
 
         Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
         Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
@@ -318,8 +318,7 @@ public class Setup {
     public void installControlScripts() throws IOException {
         logger.debug("installControlScripts() {}", controlDir);
 
-        // Files2.copyDirectoryContent(clickstackDir.resolve("dist/scripts"), controlDir);
-        Files2.chmodReadExecute(controlDir);
+        Files2.chmodAddReadExecute(controlDir);
 
         Path genappLibDir = genappDir.resolve("lib");
         Files.createDirectories(genappLibDir);
