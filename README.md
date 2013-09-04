@@ -102,12 +102,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
 └── tomcat8-clickstack
     ├── deps
     │   ├── control-lib
-    │   │   ├── args4j-2.0.24.jar
-    │   │   ├── cloudbees-jmx-invoker-1.0.2-jar-with-dependencies.jar
-    │   │   ├── hamcrest-core-1.3.jar
-    │   │   ├── hamcrest-library-1.3.jar
-    │   │   ├── slf4j-api-1.7.5.jar
-    │   │   └── slf4j-simple-1.7.5.jar
+    │   │   └── cloudbees-jmx-invoker-1.0.2-jar-with-dependencies.jar
     │   ├── javaagent-lib
     │   │   ├── cloudbees-clickstack-javaagent-1.2.0.jar
     │   │   ├── jmxtrans-agent-1.0.6.jar
