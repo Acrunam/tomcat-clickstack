@@ -1,12 +1,9 @@
 package com.cloudbees.clickstack.tomcat;
 
-import com.cloudbees.clickstack.domain.metadata.Metadata;
-import com.cloudbees.clickstack.domain.metadata.Database;
-import com.cloudbees.clickstack.domain.metadata.Email;
-import com.cloudbees.clickstack.domain.metadata.Resource;
-import com.cloudbees.clickstack.domain.metadata.SessionStore;
+import com.cloudbees.clickstack.domain.metadata.*;
 import com.cloudbees.clickstack.util.XmlUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -23,7 +20,7 @@ public class ContextXmlBuilder {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private Metadata metadata;
-    private Set<String> databaseProperties = new HashSet(Arrays.asList("minIdle", "maxIdle", "maxActive", "maxWait",
+    private Set<String> databaseProperties = Sets.newHashSet("minIdle", "maxIdle", "maxActive", "maxWait",
             "initialSize",
             "validationQuery", "validationQueryTimeout", "testOnBorrow", "testOnReturn",
             "timeBetweenEvictionRunsMillis", "numTestsPerEvictionRun", "minEvictableIdleTimeMillis", "testWhileIdle",
@@ -34,7 +31,7 @@ public class ContextXmlBuilder {
             "factory", "type", "validatorClassName", "initSQL", "jdbcInterceptors", "validationInterval", "jmxEnabled",
             "fairQueue", "abandonWhenPercentageFull", "maxAge", "useEquals", "suspectTimeout", "rollbackOnReturn",
             "commitOnReturn", "alternateUsernameAllowed", "useDisposableConnectionFacade", "logValidationErrors",
-            "propagateInterruptState"));
+            "propagateInterruptState");
 
     public ContextXmlBuilder(Metadata metadata) {
         this.metadata = metadata;
@@ -113,7 +110,8 @@ public class ContextXmlBuilder {
     protected ContextXmlBuilder addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "privateApp";
 
-        if (metadata.getRuntimeProperty(section) == null) {
+        RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
+        if (runtimeProperty == null) {
             return this;
         }
         logger.info("Add PrivateAppValve");
@@ -129,13 +127,12 @@ public class ContextXmlBuilder {
         privateAppValve.setAttribute("className", "com.cloudbees.tomcat.valves.PrivateAppValve");
 
 
-        for (Map.Entry<String, String> entry : metadata.getRuntimeProperty(section).entrySet()) {
+        for (Map.Entry<String, String> entry : runtimeProperty.entrySet()) {
             if (privateAppProperties.contains(entry.getKey())) {
                 privateAppValve.setAttribute(entry.getKey(), entry.getValue());
             } else {
                 logger.debug("privateAppValve: ignore unknown property '" + entry.getKey() + "'");
             }
-
         }
         if (privateAppValve.getAttribute("secretKey").isEmpty()) {
             throw new IllegalStateException("Invalid '" + section +
