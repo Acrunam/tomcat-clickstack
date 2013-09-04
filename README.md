@@ -52,7 +52,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
 
 <code><pre>
 └── tomcat8-clickstack
-    ├── deps
+    ├── deps <== DEPS TO ADD TO THE DEPLOYED APP
     │   ├── control-lib <== DEPS FOR CONTROL SCRIPTS
     │   │   └── … .jar
     │   ├── javaagent-lib <== DEPS FOR JAVA AGENTS
@@ -66,7 +66,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
     │   ├── tomcat-lib-mysql <== DEPS TO ADD IF a MYSQL DATABASE IS BOUND TO THE APP
     │   │   └── ... .jar
     │   └── tomcat-lib-postgresql <== DEPS TO ADD IF a POSTGRESQL DATABASE IS BOUND TO THE APP
-    │   │   └── ... .jar
+    │       └── ... .jar
     │
     ├── dist  <== FILES THAT WILL BE COPIED DIRECTLY UNDER APP_DIR
     │   ├── .genapp
@@ -169,9 +169,8 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
     ├── setup.bat
     └── tomcat-8.0.0-RC1.zip    </pre></code>
     
-# Instantiated application layout
+# Deployed Application Layout
 
- 
 <code><pre>
 ├── .genapp
 │   ├── control
