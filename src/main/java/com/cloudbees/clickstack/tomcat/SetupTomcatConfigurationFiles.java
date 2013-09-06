@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class ContextXmlBuilder {
+public class SetupTomcatConfigurationFiles {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private Metadata metadata;
@@ -33,11 +33,11 @@ public class ContextXmlBuilder {
             "commitOnReturn", "alternateUsernameAllowed", "useDisposableConnectionFacade", "logValidationErrors",
             "propagateInterruptState");
 
-    public ContextXmlBuilder(Metadata metadata) {
+    public SetupTomcatConfigurationFiles(Metadata metadata) {
         this.metadata = metadata;
     }
 
-    protected ContextXmlBuilder addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add DataSource name={}, url={}", database.getName(), database.getUrl());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", "jdbc/" + database.getName());
@@ -75,14 +75,14 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add MailSession user={}", email.getUsername());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", email.getName());
         e.setAttribute("auth", "Container");
         e.setAttribute("type", "javax.mail.Session");
         e.setAttribute("mail.smtp.user", email.getUsername());
-        e.setAttribute("mail.smtp.password", email.getPassword());
+        e.setAttribute("password", email.getPassword());
         e.setAttribute("mail.smtp.host", email.getHost());
         e.setAttribute("mail.smtp.auth", "true");
 
@@ -90,7 +90,7 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add Memcache SessionStore");
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
@@ -107,7 +107,37 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addRemoteAddrValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
+        String section = "remoteAddress";
+
+        RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
+        if (runtimeProperty == null) {
+            return this;
+        }
+        logger.info("Add RemoteAddrValve");
+
+        Set<String> privateAppProperties = new HashSet<>(Arrays.asList(
+                "className", "allow", "deny", "denyStatus"));
+
+        Element remoteAddrValve = serverXmlDocument.createElement("Valve");
+
+        remoteAddrValve.setAttribute("className", "org.apache.catalina.valves.RemoteAddrValve");
+
+
+        for (Map.Entry<String, String> entry : runtimeProperty.entrySet()) {
+            if (privateAppProperties.contains(entry.getKey())) {
+                remoteAddrValve.setAttribute(entry.getKey(), entry.getValue());
+            } else {
+                logger.debug("remoteAddrValve: ignore unknown property '" + entry.getKey() + "'");
+            }
+        }
+
+        Element remoteIpValve = XmlUtils.getUniqueElement(serverXmlDocument, "//Valve[@className='org.apache.catalina.valves.RemoteIpValve']");
+        XmlUtils.insertSiblingAfter(remoteAddrValve, remoteIpValve);
+        return this;
+    }
+
+    protected SetupTomcatConfigurationFiles addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "privateApp";
 
         RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
@@ -125,7 +155,6 @@ public class ContextXmlBuilder {
         Element privateAppValve = serverXmlDocument.createElement("Valve");
 
         privateAppValve.setAttribute("className", "com.cloudbees.tomcat.valves.PrivateAppValve");
-
 
         for (Map.Entry<String, String> entry : runtimeProperty.entrySet()) {
             if (privateAppProperties.contains(entry.getKey())) {
@@ -161,6 +190,7 @@ public class ContextXmlBuilder {
             }
         }
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
+        addRemoteAddrValve(metadata, serverXmlDocument,contextXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {

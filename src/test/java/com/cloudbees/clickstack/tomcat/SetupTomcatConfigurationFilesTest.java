@@ -34,7 +34,7 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class ContextXmlBuilderTest {
+public class SetupTomcatConfigurationFilesTest {
 
     private Document serverXml;
     private Document contextXml;
@@ -84,13 +84,46 @@ public class ContextXmlBuilderTest {
 
     private void test_private_app_valve(String metadataDotJson, String expectedXml) throws IOException {
         Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
         // run
-        contextXmlBuilder.addPrivateAppValve(metadata, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addPrivateAppValve(metadata, serverXml, contextXml);
 
 
         // verify
         Element privateAppValve = XmlUtils.getUniqueElement(serverXml, "//Valve[@className='com.cloudbees.tomcat.valves.PrivateAppValve']");
+
+        // XmlUtils.flush(serverXml, System.out);
+
+
+        assertThat(the(privateAppValve), isEquivalentTo(the(expectedXml)));
+    }
+
+    @Test
+    public void test_remote_addr_valve_allow() throws Exception {
+        // prepare
+        String json = "{ \n" +
+                "'remoteAddress': { \n" +
+                "    'allow': '82\\\\.66\\\\.240\\\\.18' \n" +
+                "}\n" +
+                "}";
+        String xml = "" +
+                "<Valve className='org.apache.catalina.valves.RemoteAddrValve' \n" +
+                "   allow='82\\.66\\.240\\.18' />";
+
+        test_remote_addr_valve(json, xml);
+
+
+    }
+
+    private void test_remote_addr_valve(String metadataDotJson, String expectedXml) throws IOException {
+        Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
+        // run
+        setupTomcatConfigurationFiles.addRemoteAddrValve(metadata, serverXml, contextXml);
+
+
+        // verify
+        Element privateAppValve = XmlUtils.getUniqueElement(serverXml, "//Valve[@className='org.apache.catalina.valves.RemoteAddrValve']");
 
         // XmlUtils.flush(serverXml, System.out);
 
@@ -112,12 +145,12 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         Database database = metadata.getResource("mydb");
 
         // run
-        contextXmlBuilder.addDatabase(database, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addDatabase(database, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -157,12 +190,12 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         SessionStore sessionStore = metadata.getResource("memcache-session-store");
 
         // run
-        contextXmlBuilder.addSessionStore(sessionStore, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -198,10 +231,10 @@ public class ContextXmlBuilderTest {
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
         Email email = metadata.getResource("mail/SendGrid");
 
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         // run
-        contextXmlBuilder.addEmail(email, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addEmail(email, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -212,7 +245,7 @@ public class ContextXmlBuilderTest {
                 "<Resource auth='Container' \n" +
                 "   mail.smtp.auth='true' \n" +
                 "   mail.smtp.host='smtp.sendgrid.net' \n" +
-                "   mail.smtp.password='12345' \n" +
+                "   password='12345' \n" +
                 "   mail.smtp.user='my_account' \n" +
                 "   name='mail/SendGrid' \n" +
                 "   type='javax.mail.Session' />";

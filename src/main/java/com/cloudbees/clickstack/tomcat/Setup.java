@@ -22,6 +22,7 @@ import com.cloudbees.clickstack.domain.metadata.Metadata;
 import com.cloudbees.clickstack.domain.metadata.SessionStore;
 import com.cloudbees.clickstack.util.CommandLineUtils;
 import com.cloudbees.clickstack.util.Files2;
+import com.cloudbees.clickstack.util.Manifests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -33,6 +34,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -110,15 +112,28 @@ public class Setup {
     }
 
     public static void main(String[] args) throws Exception {
-        Logger initialisationLogger = LoggerFactory.getLogger(Setup.class);
+        try {
+            Logger initialisationLogger = LoggerFactory.getLogger(Setup.class);
 
-        initialisationLogger.info("Start setup, current dir {}", FileSystems.getDefault().getPath(".").toAbsolutePath());
-        Environment env = CommandLineUtils.argumentsToEnvironment(args);
-        Path metadataPath = env.genappDir.resolve("metadata.json");
-        Metadata metadata = Metadata.Builder.fromFile(metadataPath);
+            initialisationLogger.info("Setup clickstack {} - {}, current dir {}",
+                    Manifests.getAttribute(Setup.class, "Implementation-Artifact"),
+                    Manifests.getAttribute(Setup.class, "Implementation-Date"),
+                    FileSystems.getDefault().getPath(".").toAbsolutePath());
+            Environment env = CommandLineUtils.argumentsToEnvironment(args);
+            Path metadataPath = env.genappDir.resolve("metadata.json");
+            Metadata metadata = Metadata.Builder.fromFile(metadataPath);
 
-        Setup setup = new Setup(env, metadata);
-        setup.setup();
+            Setup setup = new Setup(env, metadata);
+            setup.setup();
+        } catch (Exception e) {
+            String hostname;
+            try {
+                hostname = InetAddress.getLocalHost().getHostAddress();
+            } catch (Exception e2) {
+                hostname = "#hostname#";
+            }
+            throw new Exception("Exception deploying on " + hostname, e);
+        }
     }
 
     public void setup() throws Exception {
@@ -132,8 +147,8 @@ public class Setup {
         installControlScripts();
         installTomcatJavaOpts();
 
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
-        contextXmlBuilder.buildTomcatConfigurationFiles(catalinaBase);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
+        setupTomcatConfigurationFiles.buildTomcatConfigurationFiles(catalinaBase);
         logger.info("Clickstack successfully installed");
     }
 
@@ -208,15 +223,12 @@ public class Setup {
     public Path installCatalinaBase() throws IOException {
         logger.debug("installCatalinaBase() {}", catalinaBase);
 
-        Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
-        Files2.chmodAddReadWrite(workDir);
+        Files.createDirectories(catalinaBase.resolve("work"));
 
-        Path logsDir = Files.createDirectories(catalinaBase.resolve("logs"));
-        Files2.chmodAddReadWrite(logsDir);
+        Files.createDirectories(catalinaBase.resolve("logs"));
 
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
-        Files2.chmodAddReadWrite(rootWebAppDir);
 
         Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
         Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
@@ -237,6 +249,8 @@ public class Setup {
             logger.info("Copy application provided extra libs");
             Files2.copyDirectoryContent(webAppBundledExtraLibs, this.catalinaBase.resolve("lib"));
         }
+
+        Files2.chmodAddReadWrite(catalinaBase);
 
         return catalinaBase;
     }
@@ -298,9 +312,9 @@ public class Setup {
 
         writer.println("port=" + env.appPort);
 
-        Path javaPath = metadata.getJavaExecutable();
+        Path javaPath = env.getJavaExecutable(metadata);
         writer.println("java=\"" + javaPath + "\"");
-        Path javaHome = metadata.getJavaHome();
+        Path javaHome = env.getJavaHome(metadata);
         writer.println("JAVA_HOME=\"" + javaHome + "\"");
         writer.println("genapp_dir=\"" + genappDir + "\"");
 

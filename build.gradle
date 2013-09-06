@@ -1,7 +1,13 @@
+import java.text.SimpleDateFormat
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'clickstack'
 apply plugin: 'release'
+apply plugin: 'maven'
+// apply plugin: 'maven-publish' wit for http://issues.gradle.org/browse/GRADLE-2919
+
+group = 'com.cloudbees.clickstack'
 
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
@@ -9,6 +15,8 @@ targetCompatibility = '1.7'
 mainClassName = 'com.cloudbees.clickstack.tomcat.Setup'
 
 configurations {
+    deployerJars
+
     clickStackPackage.ext.clickStackFolder = ""
 
     clickStackRuntimeJavaAgent.ext.clickStackFolder = "deps/javaagent-lib"
@@ -23,7 +31,7 @@ configurations {
 }
 
 dependencies {
-    compile 'com.cloudbees.clickstack:clickstack-framework:1.0.3'
+    compile 'com.cloudbees.clickstack:clickstack-framework:1.0.4'
     compile 'com.fasterxml.jackson.core:jackson-core:2.1.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.1.3'
     compile 'com.google.code.findbugs:jsr305:2.0.1'
@@ -34,6 +42,9 @@ dependencies {
     testCompile 'junit:junit:4.10'
     testCompile 'org.hamcrest:hamcrest-all:1.3'
     testCompile 'org.xmlmatchers:xml-matchers:1.0-RC1'
+
+    deployerJars 'org.apache.maven.wagon:wagon-webdav:1.0-beta-2'
+
 
     clickStackPackage "org.apache.tomcat:tomcat:$tomcatVersion@zip"
     clickStackControl('com.cloudbees:cloudbees-jmx-invoker:1.0.2:jar-with-dependencies') {
@@ -51,8 +62,23 @@ dependencies {
     clickStackRuntimeMemcache 'de.javakaffee.msm:msm-kryo-serializer:1.6.5'
 }
 
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": rootProject.name,
+                "Implementation-Artifact": "$rootProject.group:$rootProject.name:$rootProject.version",
+                "Implementation-Version": rootProject.version,
+                "Implementation-Date": new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                "Implementation-URL": "https://github.com/CloudBees-community/tomcat8-clickstack",
+                "Implementation-DocURL": "http://developer.cloudbees.com/bin/view/RUN/Tomcat8",
+                "Implementation-Vendor": "CloudBees",
+                "Implementation-License": "http://www.apache.org/licenses/LICENSE-2.0.txt",
+        )
+    }
+}
+
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.7'
+    gradleVersion = '1.8'
 }
 
 idea {
@@ -68,7 +94,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.cloudbees.clickstack:gradle-clickstack-plugin:1.0.1'
+        classpath 'com.cloudbees.clickstack:gradle-clickstack-plugin:1.0.2'
         classpath 'com.github.townsfolk:gradle-release:1.2'
     }
 }
@@ -79,4 +105,25 @@ repositories {
         url "http://files.couchbase.com/maven2/"
     }
     mavenLocal()
+}
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            // see http://issues.gradle.org/browse/GRADLE-1826
+            String username = project.hasProperty('repoUsername') ? project.getProperty('repoUsername') : "NOT_DEFINED"
+            String password = project.hasProperty('repoPassword') ? project.getProperty('repoPassword') : "NOT_DEFINED"
+            logger.quiet("Use username: $username to upload archives")
+
+            configuration = configurations.deployerJars
+            repository(url: "dav:https://repository-community.forge.cloudbees.com/release") {
+                authentication(userName: username, password: password)
+
+            }
+            snapshotRepository(url: "dav:https://repository-community.forge.cloudbees.com/snapshot") {
+                authentication(userName: username, password: password)
+            }
+        }
+    }
 }
