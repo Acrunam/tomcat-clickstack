@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'clickstack'
 apply plugin: 'release'
+apply plugin: 'maven'
 
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
@@ -9,6 +10,8 @@ targetCompatibility = '1.7'
 mainClassName = 'com.cloudbees.clickstack.tomcat.Setup'
 
 configurations {
+    deployerJars
+
     clickStackPackage.ext.clickStackFolder = ""
 
     clickStackRuntimeJavaAgent.ext.clickStackFolder = "deps/javaagent-lib"
@@ -34,6 +37,9 @@ dependencies {
     testCompile 'junit:junit:4.10'
     testCompile 'org.hamcrest:hamcrest-all:1.3'
     testCompile 'org.xmlmatchers:xml-matchers:1.0-RC1'
+
+    deployerJars 'org.apache.maven.wagon:wagon-webdav:1.0-beta-2'
+
 
     clickStackPackage "org.apache.tomcat:tomcat:$tomcatVersion@zip"
     clickStackControl('com.cloudbees:cloudbees-jmx-invoker:1.0.2:jar-with-dependencies') {
@@ -79,4 +85,19 @@ repositories {
         url "http://files.couchbase.com/maven2/"
     }
     mavenLocal()
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+            repository(url: "dav:https://repository-community.forge.cloudbees.com/release") {
+                authentication(userName: "$clickstackMavenRepositoryUsername", password: "$clickstackMavenRepositoryPassword")
+
+            }
+            snapshotRepository(url: "dav:https://repository-community.forge.cloudbees.com/snapshot") {
+                authentication(userName: "$clickstackMavenRepositoryUsername", password: "$clickstackMavenRepositoryPassword")
+            }
+        }
+    }
 }
