@@ -82,7 +82,7 @@ public class ContextXmlBuilder {
         e.setAttribute("auth", "Container");
         e.setAttribute("type", "javax.mail.Session");
         e.setAttribute("mail.smtp.user", email.getUsername());
-        e.setAttribute("mail.smtp.password", email.getPassword());
+        e.setAttribute("password", email.getPassword());
         e.setAttribute("mail.smtp.host", email.getHost());
         e.setAttribute("mail.smtp.auth", "true");
 
