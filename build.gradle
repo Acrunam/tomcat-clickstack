@@ -1,3 +1,11 @@
+import org.w3c.dom.Element
+
+import javax.xml.parsers.DocumentBuilder
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPath
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'clickstack'
@@ -87,17 +95,48 @@ repositories {
     mavenLocal()
 }
 
+/*
 uploadArchives {
     repositories {
         mavenDeployer {
+
+            def mavenServerId = "cloudbees"
+
+            File settingsFile = new File(System.getProperty("user.home"), "/.m2/settings.xml")
+            if (!settingsFile.exists()) {
+                throw new GradleException("Failure to get Maven repository credentials (username and password): " +
+                        "Maven Settings file not found at $settingsFile.absolutePath")
+            }
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+            Element settings = builder.parse(settingsFile).documentElement
+
+            XPath xpath = XPathFactory.newInstance().newXPath()
+            String xpathExpression = "//settings/servers/server[id='" + mavenServerId + "']"
+            // logger.quiet("xpathExpression: $xpathExpression")
+            def server = xpath.evaluate(xpathExpression, settings, XPathConstants.NODE)
+            if (server == null)
+                throw new GradleException("No entry found in $settingsFile matching '" + xpathExpression + "'")
+            def username = xpath.evaluate("username/text()", server)
+            if (!username)
+                throw new GradleException("Username not found in '" + xpathExpression + "'")
+
+            def password = xpath.evaluate("password/text()", server)
+            if (!password)
+                throw new GradleException("Password not found in '" + xpathExpression + "'")
+            if (password.startsWith("{") && password.endsWith("}"))
+                throw new GradleException("Failure to get Maven repository credentials (username and password): " +
+                        "Encrypted passwords are not supported")
+
+            logger.quiet("Use username: $username to upload archives")
+
             configuration = configurations.deployerJars
             repository(url: "dav:https://repository-community.forge.cloudbees.com/release") {
-                authentication(userName: "$clickstackMavenRepositoryUsername", password: "$clickstackMavenRepositoryPassword")
+                authentication(userName: username, password: password)
 
             }
             snapshotRepository(url: "dav:https://repository-community.forge.cloudbees.com/snapshot") {
-                authentication(userName: "$clickstackMavenRepositoryUsername", password: "$clickstackMavenRepositoryPassword")
+                authentication(userName: username, password: password)
             }
         }
     }
-}
+}*/
