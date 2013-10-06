@@ -212,7 +212,7 @@ public class ContextXmlBuilderTest {
                 "<Resource auth='Container' \n" +
                 "   mail.smtp.auth='true' \n" +
                 "   mail.smtp.host='smtp.sendgrid.net' \n" +
-                "   mail.smtp.password='12345' \n" +
+                "   password='12345' \n" +
                 "   mail.smtp.user='my_account' \n" +
                 "   name='mail/SendGrid' \n" +
                 "   type='javax.mail.Session' />";
