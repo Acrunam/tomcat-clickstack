@@ -208,15 +208,12 @@ public class Setup {
     public Path installCatalinaBase() throws IOException {
         logger.debug("installCatalinaBase() {}", catalinaBase);
 
-        Path workDir = Files.createDirectories(catalinaBase.resolve("work"));
-        Files2.chmodAddReadWrite(workDir);
+        Files.createDirectories(catalinaBase.resolve("work"));
 
-        Path logsDir = Files.createDirectories(catalinaBase.resolve("logs"));
-        Files2.chmodAddReadWrite(logsDir);
+        Files.createDirectories(catalinaBase.resolve("logs"));
 
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
-        Files2.chmodAddReadWrite(rootWebAppDir);
 
         Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
         Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
@@ -237,6 +234,8 @@ public class Setup {
             logger.info("Copy application provided extra libs");
             Files2.copyDirectoryContent(webAppBundledExtraLibs, this.catalinaBase.resolve("lib"));
         }
+
+        Files2.chmodAddReadWrite(catalinaBase);
 
         return catalinaBase;
     }
