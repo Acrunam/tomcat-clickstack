@@ -99,6 +99,39 @@ public class ContextXmlBuilderTest {
     }
 
     @Test
+    public void test_remote_addr_valve_allow() throws Exception {
+        // prepare
+        String json = "{ \n" +
+                "'remoteAddress': { \n" +
+                "    'allow': '82\\\\.66\\\\.240\\\\.18' \n" +
+                "}\n" +
+                "}";
+        String xml = "" +
+                "<Valve className='org.apache.catalina.valves.RemoteAddrValve' \n" +
+                "   allow='82\\.66\\.240\\.18' />";
+
+        test_remote_addr_valve(json, xml);
+
+
+    }
+
+    private void test_remote_addr_valve(String metadataDotJson, String expectedXml) throws IOException {
+        Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
+        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        // run
+        contextXmlBuilder.addRemoteAddrValve(metadata, serverXml, contextXml);
+
+
+        // verify
+        Element privateAppValve = XmlUtils.getUniqueElement(serverXml, "//Valve[@className='org.apache.catalina.valves.RemoteAddrValve']");
+
+        // XmlUtils.flush(serverXml, System.out);
+
+
+        assertThat(the(privateAppValve), isEquivalentTo(the(expectedXml)));
+    }
+
+    @Test
     public void add_data_source_success_basic_config() throws Exception {
 
         // prepare

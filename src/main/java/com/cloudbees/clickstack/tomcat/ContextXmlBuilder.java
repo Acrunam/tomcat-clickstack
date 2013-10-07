@@ -107,6 +107,36 @@ public class ContextXmlBuilder {
         return this;
     }
 
+    protected ContextXmlBuilder addRemoteAddrValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
+        String section = "remoteAddress";
+
+        RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
+        if (runtimeProperty == null) {
+            return this;
+        }
+        logger.info("Add RemoteAddrValve");
+
+        Set<String> privateAppProperties = new HashSet<>(Arrays.asList(
+                "className", "allow", "deny", "denyStatus"));
+
+        Element remoteAddrValve = serverXmlDocument.createElement("Valve");
+
+        remoteAddrValve.setAttribute("className", "org.apache.catalina.valves.RemoteAddrValve");
+
+
+        for (Map.Entry<String, String> entry : runtimeProperty.entrySet()) {
+            if (privateAppProperties.contains(entry.getKey())) {
+                remoteAddrValve.setAttribute(entry.getKey(), entry.getValue());
+            } else {
+                logger.debug("remoteAddrValve: ignore unknown property '" + entry.getKey() + "'");
+            }
+        }
+
+        Element remoteIpValve = XmlUtils.getUniqueElement(serverXmlDocument, "//Valve[@className='org.apache.catalina.valves.RemoteIpValve']");
+        XmlUtils.insertSiblingAfter(remoteAddrValve, remoteIpValve);
+        return this;
+    }
+
     protected ContextXmlBuilder addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "privateApp";
 
@@ -125,7 +155,6 @@ public class ContextXmlBuilder {
         Element privateAppValve = serverXmlDocument.createElement("Valve");
 
         privateAppValve.setAttribute("className", "com.cloudbees.tomcat.valves.PrivateAppValve");
-
 
         for (Map.Entry<String, String> entry : runtimeProperty.entrySet()) {
             if (privateAppProperties.contains(entry.getKey())) {
@@ -161,6 +190,7 @@ public class ContextXmlBuilder {
             }
         }
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
+        addRemoteAddrValve(metadata, serverXmlDocument,contextXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
