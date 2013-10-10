@@ -34,7 +34,7 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class ContextXmlBuilderTest {
+public class SetupTomcatConfigurationFilesTest {
 
     private Document serverXml;
     private Document contextXml;
@@ -84,9 +84,9 @@ public class ContextXmlBuilderTest {
 
     private void test_private_app_valve(String metadataDotJson, String expectedXml) throws IOException {
         Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
         // run
-        contextXmlBuilder.addPrivateAppValve(metadata, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addPrivateAppValve(metadata, serverXml, contextXml);
 
 
         // verify
@@ -117,9 +117,9 @@ public class ContextXmlBuilderTest {
 
     private void test_remote_addr_valve(String metadataDotJson, String expectedXml) throws IOException {
         Metadata metadata = Metadata.Builder.fromJsonString(metadataDotJson, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
         // run
-        contextXmlBuilder.addRemoteAddrValve(metadata, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addRemoteAddrValve(metadata, serverXml, contextXml);
 
 
         // verify
@@ -145,12 +145,12 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         Database database = metadata.getResource("mydb");
 
         // run
-        contextXmlBuilder.addDatabase(database, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addDatabase(database, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -190,12 +190,12 @@ public class ContextXmlBuilderTest {
                 "}\n" +
                 "}";
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         SessionStore sessionStore = metadata.getResource("memcache-session-store");
 
         // run
-        contextXmlBuilder.addSessionStore(sessionStore, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -231,10 +231,10 @@ public class ContextXmlBuilderTest {
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
         Email email = metadata.getResource("mail/SendGrid");
 
-        ContextXmlBuilder contextXmlBuilder = new ContextXmlBuilder(metadata);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
         // run
-        contextXmlBuilder.addEmail(email, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addEmail(email, serverXml, contextXml);
 
         // XmlUtils.flush(contextXml, System.out);
 

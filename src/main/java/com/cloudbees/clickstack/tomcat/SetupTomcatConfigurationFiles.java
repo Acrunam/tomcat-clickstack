@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class ContextXmlBuilder {
+public class SetupTomcatConfigurationFiles {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private Metadata metadata;
@@ -33,11 +33,11 @@ public class ContextXmlBuilder {
             "commitOnReturn", "alternateUsernameAllowed", "useDisposableConnectionFacade", "logValidationErrors",
             "propagateInterruptState");
 
-    public ContextXmlBuilder(Metadata metadata) {
+    public SetupTomcatConfigurationFiles(Metadata metadata) {
         this.metadata = metadata;
     }
 
-    protected ContextXmlBuilder addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addDatabase(Database database, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add DataSource name={}, url={}", database.getName(), database.getUrl());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", "jdbc/" + database.getName());
@@ -75,7 +75,7 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add MailSession user={}", email.getUsername());
         Element e = contextXmlDocument.createElement("Resource");
         e.setAttribute("name", email.getName());
@@ -90,7 +90,7 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add Memcache SessionStore");
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
@@ -107,7 +107,7 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addRemoteAddrValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addRemoteAddrValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "remoteAddress";
 
         RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
@@ -137,7 +137,7 @@ public class ContextXmlBuilder {
         return this;
     }
 
-    protected ContextXmlBuilder addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "privateApp";
 
         RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
