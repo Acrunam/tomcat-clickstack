@@ -98,8 +98,8 @@ public class Setup {
         Preconditions.checkState(Files.exists(clickstackDir) && Files.isDirectory(clickstackDir));
 
         this.warFile = env.packageDir.resolve("app.war");
-        Preconditions.checkState(Files.exists(warFile),  "File not found %s");
-        Preconditions.checkState(!Files.isDirectory(warFile),"Expected to be a file and not a directory %s");
+        Preconditions.checkState(Files.exists(warFile),  "File not found %s", warFile);
+        Preconditions.checkState(!Files.isDirectory(warFile),"Expected to be a file and not a directory %s", warFile);
 
         this.appExtraFilesDir = Files.createDirectories(appDir.resolve("app-extra-files"));
         Files2.chmodAddReadWrite(appExtraFilesDir);
