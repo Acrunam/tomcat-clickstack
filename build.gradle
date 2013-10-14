@@ -113,6 +113,7 @@ repositories {
 
 release {
     requireBranch = ''
+    tagPrefix = 'v'
 }
 createReleaseTag.dependsOn uploadArchives
 
