@@ -188,7 +188,7 @@ public class Setup {
 
         Path tomcatPackagePath = Files2.findArtifact(clickstackDir, "tomcat", "zip");
         Files2.unzip(tomcatPackagePath, appDir);
-        catalinaHome = Files2.findUniqueFolderBeginningWith(appDir, "apache-tomcat");
+        catalinaHome = Files2.findUniqueDirectoryBeginningWith(appDir, "apache-tomcat");
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
         Path targetLibDir = Files.createDirectories(catalinaBase.resolve("lib"));
