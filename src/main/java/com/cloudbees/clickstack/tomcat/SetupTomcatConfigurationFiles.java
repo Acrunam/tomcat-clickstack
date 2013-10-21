@@ -195,19 +195,19 @@ public class SetupTomcatConfigurationFiles {
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
 
-        Preconditions.checkArgument(Files.exists(catalinaBase), "Given catalina.base does not exist {}", catalinaBase);
-        Preconditions.checkArgument(Files.isDirectory(catalinaBase), "Given catalina.base is not a directory {}", catalinaBase);
+        Preconditions.checkArgument(Files.exists(catalinaBase), "Given catalina.base does not exist %s", catalinaBase);
+        Preconditions.checkArgument(Files.isDirectory(catalinaBase), "Given catalina.base is not a directory %s", catalinaBase);
 
 
         Path contextXmlPath = catalinaBase.resolve("conf/context.xml");
-        Preconditions.checkArgument(Files.exists(contextXmlPath), "Given context.xml does not exist {}", contextXmlPath);
+        Preconditions.checkArgument(Files.exists(contextXmlPath), "Given context.xml does not exist %s", contextXmlPath);
 
         Document contextXmlDocument = XmlUtils.loadXmlDocumentFromFile(contextXmlPath.toFile());
         XmlUtils.checkRootElement(contextXmlDocument, "Context");
 
 
         Path serverXmlPath = catalinaBase.resolve("conf/server.xml");
-        Preconditions.checkArgument(Files.exists(serverXmlPath), "Given server.xml does not exist {}", serverXmlPath);
+        Preconditions.checkArgument(Files.exists(serverXmlPath), "Given server.xml does not exist %s", serverXmlPath);
 
         Document serverXmlDocument = XmlUtils.loadXmlDocumentFromFile(serverXmlPath.toFile());
 
