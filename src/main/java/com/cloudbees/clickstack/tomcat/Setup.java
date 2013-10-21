@@ -20,6 +20,8 @@ import com.cloudbees.clickstack.domain.metadata.Database;
 import com.cloudbees.clickstack.domain.metadata.Email;
 import com.cloudbees.clickstack.domain.metadata.Metadata;
 import com.cloudbees.clickstack.domain.metadata.SessionStore;
+import com.cloudbees.clickstack.plugin.java.JavaPlugin;
+import com.cloudbees.clickstack.plugin.java.JavaPluginResult;
 import com.cloudbees.clickstack.util.CommandLineUtils;
 import com.cloudbees.clickstack.util.Files2;
 import com.cloudbees.clickstack.util.Manifests;
@@ -53,6 +55,8 @@ public class Setup {
     @Nonnull
     final Path clickstackDir;
     @Nonnull
+    final Path javaHome;
+    @Nonnull
     final Path catalinaBase;
     @Nonnull
     final Path warFile;
@@ -75,7 +79,7 @@ public class Setup {
     Path catalinaHome;
 
 
-    public Setup(@Nonnull Environment env, @Nonnull Metadata metadata) throws IOException {
+    public Setup(@Nonnull Environment env, @Nonnull Metadata metadata, @Nonnull Path javaHome) throws IOException {
         logger.info("Setup: {}, {}", env, metadata);
 
         this.env = env;
@@ -106,6 +110,9 @@ public class Setup {
 
         this.metadata = metadata;
 
+        this.javaHome = Preconditions.checkNotNull(javaHome, "javaHome");
+        Preconditions.checkArgument(Files.exists(javaHome), "JavaHome does not exist %s", javaHome);
+
         logger.debug("warFile: {}", warFile.toAbsolutePath());
         logger.debug("catalinaBase: {}", catalinaBase.toAbsolutePath());
         logger.debug("agentLibDir: {}", agentLibDir.toAbsolutePath());
@@ -124,7 +131,10 @@ public class Setup {
             Path metadataPath = env.genappDir.resolve("metadata.json");
             Metadata metadata = Metadata.Builder.fromFile(metadataPath);
 
-            Setup setup = new Setup(env, metadata);
+            JavaPlugin javaPlugin = new JavaPlugin();
+            JavaPluginResult javaPluginResult = javaPlugin.setup(metadata, env);
+
+            Setup setup = new Setup(env, metadata, javaPluginResult.getJavaHome());
             setup.setup();
         } catch (Exception e) {
             String hostname;
@@ -313,10 +323,8 @@ public class Setup {
 
         writer.println("port=" + env.appPort);
 
-        Path javaPath = env.getJavaExecutable(metadata);
-        writer.println("java=\"" + javaPath + "\"");
-        Path javaHome = env.getJavaHome(metadata);
         writer.println("JAVA_HOME=\"" + javaHome + "\"");
+        writer.println("java=\"" + javaHome.resolve("bin/java") + "\"");
         writer.println("genapp_dir=\"" + genappDir + "\"");
 
         writer.println("catalina_opts=\"-Dport.http=" + env.appPort + "\"");
