@@ -241,6 +241,14 @@ public class Setup {
         Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
         Files2.unzip(warFile, rootWebAppDir);
 
+        Path webAppBundledContextXmlFile = rootWebAppDir.resolve("META-INF/context.xml");
+        Path catalinaBaseContextXml = this.catalinaBase.resolve("conf/context.xml");
+        if (Files.exists(webAppBundledContextXmlFile) && !Files.isDirectory(webAppBundledContextXmlFile)) {
+            logger.info("Copy application provided context.xml");
+            Files.move(catalinaBaseContextXml, catalinaBase.resolve("conf/context-initial.xml"));
+            Files.copy(webAppBundledContextXmlFile, catalinaBaseContextXml);
+        }
+
         Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
         Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
         if (Files.exists(webAppBundledServerXmlFile) && !Files.isDirectory(webAppBundledServerXmlFile)) {
