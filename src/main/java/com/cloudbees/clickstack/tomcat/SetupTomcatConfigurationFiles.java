@@ -90,7 +90,7 @@ public class SetupTomcatConfigurationFiles {
         return this;
     }
 
-    protected SetupTomcatConfigurationFiles addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument) {
+    protected SetupTomcatConfigurationFiles addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument, Metadata metadata) {
         logger.info("Add Memcache SessionStore");
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
@@ -102,6 +102,13 @@ public class SetupTomcatConfigurationFiles {
         e.setAttribute("memcachedNodes", store.getNodes());
         e.setAttribute("username", store.getUsername());
         e.setAttribute("password", store.getPassword());
+
+        Set<String> excludedParameters = Sets.newHashSet("servers", "username", "password", "__resource_name__", "__resource_type__");
+        for (Map.Entry<String, String> entry : store.getProperties().entrySet()) {
+            if (!excludedParameters.contains(entry.getKey())) {
+                e.setAttribute(entry.getKey(), entry.getValue());
+            }
+        }
 
         contextXmlDocument.getDocumentElement().appendChild(e);
         return this;
@@ -186,11 +193,11 @@ public class SetupTomcatConfigurationFiles {
             } else if (resource instanceof Email) {
                 addEmail((Email) resource, serverXmlDocument, contextXmlDocument);
             } else if (resource instanceof SessionStore) {
-                addSessionStore((SessionStore) resource, serverXmlDocument, contextXmlDocument);
+                addSessionStore((SessionStore) resource, serverXmlDocument, contextXmlDocument, metadata);
             }
         }
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
-        addRemoteAddrValve(metadata, serverXmlDocument,contextXmlDocument);
+        addRemoteAddrValve(metadata, serverXmlDocument, contextXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
