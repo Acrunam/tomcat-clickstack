@@ -195,7 +195,7 @@ public class SetupTomcatConfigurationFilesTest {
         SessionStore sessionStore = metadata.getResource("memcache-session-store");
 
         // run
-        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml);
+        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml, metadata);
 
         // XmlUtils.flush(contextXml, System.out);
 
@@ -214,6 +214,47 @@ public class SetupTomcatConfigurationFilesTest {
                 "   username='my_acount' />";
         assertThat(the(sessionManager), isEquivalentTo(the(xml)));
     }
+
+    @Test
+    public void add_session_store_success_enhanced_config() throws Exception {
+
+        // prepare
+        String json = "{ \n" +
+                "'memcache-session-store': { \n" +
+                "    'servers': 'memcache1.mycompany.com,server2.mycompany.com', \n" +
+                "    'username': 'my_acount', \n" +
+                "    'password': '09876543', \n" +
+                "    'transcoderFactoryClass': 'de.javakaffee.web.msm.JavaSerializationTranscoderFactory', \n" +
+                "    '__resource_name__': 'memcache-session-store', \n" +
+                "    '__resource_type__': 'session-store' \n" +
+                "}\n" +
+                "}";
+        Metadata metadata = Metadata.Builder.fromJsonString(json, true);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
+
+        SessionStore sessionStore = metadata.getResource("memcache-session-store");
+
+        // run
+        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml, metadata);
+
+        // XmlUtils.flush(contextXml, System.out);
+
+        // verify
+        Element sessionManager = XmlUtils.getUniqueElement(contextXml, "//Manager");
+
+        String xml = "" +
+                "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
+                "   memcachedNodes='http://memcache1.mycompany.com:8091/pools,http://server2.mycompany.com:8091/pools' \n" +
+                "   memcachedProtocol='binary' \n" +
+                "   password='09876543' \n" +
+                "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
+                "   sessionBackupAsync='false' \n" +
+                "   sticky='false' \n" +
+                "   transcoderFactoryClass='de.javakaffee.web.msm.JavaSerializationTranscoderFactory' \n" +
+                "   username='my_acount' />";
+        assertThat(the(sessionManager), isEquivalentTo(the(xml)));
+    }
+
 
     @Test
     public void add_mail_session_success_basic_config() throws IOException {
