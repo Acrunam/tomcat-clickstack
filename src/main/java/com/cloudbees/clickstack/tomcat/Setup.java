@@ -324,6 +324,7 @@ public class Setup {
         PrintWriter writer = new PrintWriter(Files.newOutputStream(configFile));
 
         writer.println("app_dir=\"" + appDir + "\"");
+        writer.println("app_extra_files=\"" + appExtraFilesDir + "\"");
         writer.println("app_tmp=\"" + appDir.resolve("tmp") + "\"");
         writer.println("log_dir=\"" + logDir + "\"");
         writer.println("catalina_home=\"" + catalinaHome + "\"");
