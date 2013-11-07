@@ -7,6 +7,7 @@ control_dir="$(dirname $0)"
 . "$control_dir/functions/functions"
 . "$control_dir/config"
 
+export app_extra_files=$app_extra_files
 export JAVA_HOME=$JAVA_HOME
 export PATH=$JAVA_HOME/bin:$PATH
 
