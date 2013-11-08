@@ -13,7 +13,6 @@ cd "$app_dir/.genapp/setup_status"
         echo -e "\n----- Setup status for $_file is: -----" 
         cat "$_file"
     done
-cd "$_dir"
 echo -e "\n----- Context.xml file is: -----"
 cat "$app_dir/catalina-base/conf/context.xml"
 echo -e "\n----- Env file is: -----"
