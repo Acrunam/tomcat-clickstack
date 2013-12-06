@@ -75,6 +75,36 @@ public class SetupTomcatConfigurationFiles {
         return this;
     }
 
+    protected SetupTomcatConfigurationFiles addSyslogAccessLogValve(Metadata metadata, Document serverDocument, Document contextXmlDocument) {
+        // Syslog Access Log Valve
+        if (!"true".equalsIgnoreCase(metadata.getRuntimeParameter("accessLog", "syslog", "false"))) {
+            return this;
+        }
+
+        logger.info("Add Syslog Access Log Valve");
+
+        String pattern = metadata.getRuntimeParameter("accessLog", "pattern", "combined");
+
+        Element e = serverDocument.createElement("Valve");
+        e.setAttribute("className", "com.cloudbees.tomcat.valves.SyslogAccessLogValve");
+         // TODO use app_id for appName
+        String appName = metadata.getRuntimeParameter("accessLog", "appName", null);
+        if (appName != null) {
+            e.setAttribute("appName", appName);
+        }
+        // TODO use instance_id for hostname
+        // e.setAttribute("hostName", "TODO");
+        e.setAttribute("syslogServerHostname", "${SYSLOG_HOST}");
+        e.setAttribute("syslogServerPort", "${SYSLOG_PORT}");
+        e.setAttribute("pattern", pattern);
+
+        Element remoteIpValve = XmlUtils.getUniqueElement(serverDocument, "//Valve[@className='org.apache.catalina.valves.RemoteIpValve']");
+
+        XmlUtils.insertSiblingAfter(e, remoteIpValve);
+
+        return this;
+    }
+
     protected SetupTomcatConfigurationFiles addEmail(Email email, Document serverDocument, Document contextXmlDocument) {
         logger.info("Add MailSession user={}", email.getUsername());
         Element e = contextXmlDocument.createElement("Resource");
@@ -198,6 +228,7 @@ public class SetupTomcatConfigurationFiles {
         }
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
         addRemoteAddrValve(metadata, serverXmlDocument, contextXmlDocument);
+        addSyslogAccessLogValve(metadata, serverXmlDocument, contextXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
