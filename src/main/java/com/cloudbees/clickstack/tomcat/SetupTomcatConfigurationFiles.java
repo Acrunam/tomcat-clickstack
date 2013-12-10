@@ -83,20 +83,15 @@ public class SetupTomcatConfigurationFiles {
 
         logger.info("Add Syslog Access Log Valve");
 
-        String pattern = metadata.getRuntimeParameter("accessLog", "pattern", "combined");
-
         Element e = serverDocument.createElement("Valve");
         e.setAttribute("className", "com.cloudbees.tomcat.valves.SyslogAccessLogValve");
-         // TODO use app_id for appName
-        String appName = metadata.getRuntimeParameter("accessLog", "appName", null);
-        if (appName != null) {
-            e.setAttribute("appName", appName);
-        }
-        // TODO use instance_id for hostname
-        // e.setAttribute("hostName", "TODO");
-        e.setAttribute("syslogServerHostname", "${SYSLOG_HOST}");
-        e.setAttribute("syslogServerPort", "${SYSLOG_PORT}");
-        e.setAttribute("pattern", pattern);
+
+        e.setAttribute("appName", metadata.getRuntimeParameter("accessLog", "syslog.appName", "access_log"));
+        e.setAttribute("hostname", metadata.getRuntimeParameter("accessLog", "syslog.appHostname","${SYSLOG_APP_HOSTNAME}"));
+        e.setAttribute("syslogServerHostname", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerHost","${SYSLOG_HOST}"));
+        e.setAttribute("syslogServerPort", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerPort","${SYSLOG_PORT}"));
+        e.setAttribute("pattern", metadata.getRuntimeParameter("accessLog", "pattern", "combined"));
+        e.setAttribute("requestAttributesEnabled", "true");
 
         Element remoteIpValve = XmlUtils.getUniqueElement(serverDocument, "//Valve[@className='org.apache.catalina.valves.RemoteIpValve']");
 
