@@ -365,6 +365,10 @@ public class Setup {
             envClickstackProvided.put("SYSLOG_HOST", syslog.getHostname());
             envClickstackProvided.put("SYSLOG_PORT", String.valueOf(syslog.getPort()));
             envClickstackProvided.put("SYSLOG_FACILITY", syslog.getFacility());
+            envClickstackProvided.put("SYSLOG_APP_NAME", syslog.getAppName(env));
+            envClickstackProvided.put("SYSLOG_APP_HOSTNAME", syslog.getAppHostname(env));
+
+
         } else {
             // TODO: inject env variables suffixed by the "sanitized" resource name (e.g. )
             logger.warn("More or less ({}) than 1 syslog configuration found, don't inject configuration in : {}", syslogConfigs.size(), syslogConfigs);
