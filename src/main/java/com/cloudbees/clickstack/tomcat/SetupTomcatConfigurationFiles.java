@@ -1,14 +1,18 @@
 package com.cloudbees.clickstack.tomcat;
 
 import com.cloudbees.clickstack.domain.metadata.*;
+import com.cloudbees.clickstack.util.Strings2;
 import com.cloudbees.clickstack.util.XmlUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.annotation.Nullable;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
@@ -87,9 +91,9 @@ public class SetupTomcatConfigurationFiles {
         e.setAttribute("className", "com.cloudbees.tomcat.valves.SyslogAccessLogValve");
 
         e.setAttribute("appName", metadata.getRuntimeParameter("accessLog", "syslog.appName", "access_log"));
-        e.setAttribute("hostname", metadata.getRuntimeParameter("accessLog", "syslog.appHostname","${SYSLOG_APP_HOSTNAME}"));
-        e.setAttribute("syslogServerHostname", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerHost","${SYSLOG_HOST}"));
-        e.setAttribute("syslogServerPort", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerPort","${SYSLOG_PORT}"));
+        e.setAttribute("hostname", metadata.getRuntimeParameter("accessLog", "syslog.appHostname", "${SYSLOG_APP_HOSTNAME}"));
+        e.setAttribute("syslogServerHostname", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerHost", "${SYSLOG_HOST}"));
+        e.setAttribute("syslogServerPort", metadata.getRuntimeParameter("accessLog", "syslog.syslogServerPort", "${SYSLOG_PORT}"));
         e.setAttribute("pattern", metadata.getRuntimeParameter("accessLog", "pattern", "combined"));
         e.setAttribute("requestAttributesEnabled", "true");
 
@@ -169,6 +173,30 @@ public class SetupTomcatConfigurationFiles {
         return this;
     }
 
+    protected SetupTomcatConfigurationFiles updateConnectorConfiguration(Metadata metadata, Document serverXmlDocument) {
+        String section = "tomcat";
+        RuntimeProperty runtimeProperty = metadata.getRuntimeProperty(section);
+
+        if (runtimeProperty == null) {
+            return null;
+        }
+
+        Iterable<Map.Entry<String, String>> connectorProperties = Iterables.filter(runtimeProperty.entrySet(), new Predicate<Map.Entry<String, String>>() {
+            @Override
+            public boolean apply(@Nullable Map.Entry<String, String> property) {
+                return property != null && property.getKey().startsWith("connector.");
+            }
+        });
+
+        Element connector = XmlUtils.getUniqueElement(serverXmlDocument, "/Server/Service/Connector");
+        for (Map.Entry<String, String> property : connectorProperties) {
+            String attributeName = Strings2.substringAfterFirst(property.getKey(), '.');
+            connector.setAttribute(attributeName, property.getValue());
+        }
+
+        return this;
+    }
+
     protected SetupTomcatConfigurationFiles addPrivateAppValve(Metadata metadata, Document serverXmlDocument, Document contextXmlDocument) {
         String section = "privateApp";
 
@@ -224,6 +252,7 @@ public class SetupTomcatConfigurationFiles {
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
         addRemoteAddrValve(metadata, serverXmlDocument, contextXmlDocument);
         addSyslogAccessLogValve(metadata, serverXmlDocument, contextXmlDocument);
+        updateConnectorConfiguration(metadata,serverXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {

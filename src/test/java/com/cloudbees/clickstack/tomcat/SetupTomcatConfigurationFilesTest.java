@@ -292,4 +292,35 @@ public class SetupTomcatConfigurationFilesTest {
                 "   type='javax.mail.Session' />";
         assertThat(the(emailSession), isEquivalentTo(the(xml)));
     }
+
+    @Test
+    public void add_http_connector_config() throws IOException {
+        // prepare
+
+        String json = "{ \n" +
+                " 'tomcat': { \n" +
+                " 'connector.maxPostSize': '10485760', \n" +
+                " 'ignore.me': 'anyvalue' \n" +
+                " }\n" +
+                "}";
+        Metadata metadata = Metadata.Builder.fromJsonString(json, true);
+
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
+
+        // run
+        setupTomcatConfigurationFiles.updateConnectorConfiguration(metadata, serverXml);
+
+        // XmlUtils.flush(serverXml, System.out);
+
+        // verify
+        Element connector = XmlUtils.getUniqueElement(serverXml, "/Server/Service/Connector");
+
+        String xml = "" +
+                "<Connector port='${port.http}' protocol='HTTP/1.1' \n" +
+                "    URIEncoding='UTF-8' \n" +
+                "    maxPostSize='10485760' \n" +
+                "    connectionTimeout='20000' \n" +
+                "    redirectPort='8443'/>";
+        assertThat(the(connector), isEquivalentTo(the(xml)));
+    }
 }
