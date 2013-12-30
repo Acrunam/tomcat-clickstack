@@ -57,8 +57,8 @@ dependencies {
     clickStackRuntimeJavaAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.6'
     clickStackRuntimeJavaAgent 'com.cloudbees.clickstack:cloudbees-clickstack-javaagent:1.2.0'
     clickStackRuntime 'com.cloudbees:cloudbees-web-container-extras:1.0.3'
-    clickStackRuntimePostgresql 'postgresql:postgresql:9.1-901-1.jdbc4'
-    clickStackRuntimeMySql 'mysql:mysql-connector-java:5.1.25'
+    clickStackRuntimePostgresql 'org.postgresql:postgresql:9.3-1100-jdbc41'
+    clickStackRuntimeMySql 'mysql:mysql-connector-java:5.1.28'
     clickStackRuntimeMail 'javax.mail:mail:1.4.7'
     // we need couchbase-client as we store in membase
     // https://code.google.com/p/memcached-session-manager/wiki/SetupAndConfiguration
