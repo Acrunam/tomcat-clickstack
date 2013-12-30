@@ -16,7 +16,6 @@
   limitations under the License.
 -->
 <Server port="-1" shutdown="SHUTDOWN">
-    <Listener className="org.apache.catalina.core.JasperListener"/>
     <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
     <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener"/>
 
