@@ -2,9 +2,8 @@
 
 To use: 
 
-    bees app:deploy -t tomcat7 -RPLUGIN.SRC.tomcat7=https://community.ci.cloudbees.com/job/tomcat8-clickstack/lastSuccessfulBuild/artifact/build/distributions/tomcat8-clickstack-1.0.0-SNAPSHOT.zip -a APP_ID WAR_FILE
+    bees app:deploy -t tomcat8 -a APP_ID WAR_FILE path/to/my/app.war
 
-Please don't `-t tomcat7` as long as `-t tomcat8` has not been setup by CloudBees engineering team.
 
 Tomcat 8 ClickStack for CloudBees PaaS.
 
@@ -26,7 +25,7 @@ Note: You should be familiar with developing ClickStacks using the genapp system
 * In plugins\_home, add a symlink to the `tomcat8-clickstack/build/install/tomcat8-clickstack` dir named 'tomcat8'
 
    ```
-   $ ln -s tomcat8-clickstack/build/install/tomcat8-clickstack PLUGINS\_HOME/tomcat8
+   $ ln -s tomcat8-clickstack/build/install/tomcat8-clickstack $GENAPP_PLUGINS_HOME/tomcat8
    ```
 
 * In your metadata.json, you can now reference the stack using the name 'tomcat8'
@@ -38,7 +37,7 @@ Note: You should be familiar with developing ClickStacks using the genapp system
 Once the plugin is published to a public URL, you can update an app to use it with the CloudBees SDK:
 
    ```
-$ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_ZIP PATH_TO_WARFILE
+$ bees app:deploy -a APP_ID -t tomcat8 -RPLUGIN.SRC.tomcat8=URL_TO_YOUR_PLUGIN_ZIP PATH_TO_WARFILE
 ```
 
 # Key concepts
@@ -93,7 +92,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
     │
     ├── setup
     ├── setup.bat
-    └── tomcat-8.0.0-RC1.zip <== TOMCAT PACKAGE TO DEPLOY
+    └── tomcat-8.0.0-RC10.zip <== TOMCAT PACKAGE TO DEPLOY
 </pre></code>
 
 ### ClickStack Detailed layout
@@ -167,7 +166,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
     │   └── xom-1.2.5.jar
     ├── setup
     ├── setup.bat
-    └── tomcat-8.0.0-RC1.zip    </pre></code>
+    └── tomcat-8.0.0-RC10.zip    </pre></code>
     
 # Deployed Application Layout
 
@@ -197,7 +196,7 @@ $ bees app:deploy -a APP_ID -t tomcat7 -RPLUGIN.SRC.tomcat7=URL_TO_YOUR_PLUGIN_Z
 │   └── setup_status
 │       ├── ok
 │       └── plugin_tomcat8_clickstack_0
-├── apache-tomcat-8.0.0-RC1
+├── apache-tomcat-8.0.0-RC10
 │   ├── LICENSE
 │   ├── NOTICE
 │   ├── RELEASE-NOTES
