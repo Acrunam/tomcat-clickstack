@@ -16,6 +16,7 @@
   limitations under the License.
 -->
 <Context>
+    <Listener className="com.cloudbees.tomcat.listener.JndiContextDumperListener" />
 
     <WatchedResource>WEB-INF/web.xml</WatchedResource>
 
