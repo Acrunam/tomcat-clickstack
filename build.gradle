@@ -56,7 +56,7 @@ dependencies {
     }
     clickStackRuntimeJavaAgent 'org.jmxtrans.agent:jmxtrans-agent:1.0.6'
     clickStackRuntimeJavaAgent 'com.cloudbees.clickstack:cloudbees-clickstack-javaagent:1.2.0'
-    clickStackRuntime 'com.cloudbees:cloudbees-web-container-extras:1.0.4'
+    clickStackRuntime 'com.cloudbees:cloudbees-web-container-extras:1.0.5'
     clickStackRuntimePostgresql 'org.postgresql:postgresql:9.3-1100-jdbc41'
     clickStackRuntimeMySql 'mysql:mysql-connector-java:5.1.28'
     clickStackRuntimeMail 'javax.mail:mail:1.4.7'
