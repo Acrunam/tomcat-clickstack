@@ -192,6 +192,62 @@ public class Setup {
         catalinaHome = Files2.findUniqueDirectoryBeginningWith(appDir, "apache-tomcat");
         logger.debug("installCatalinaHome() {}", catalinaHome);
 
+        Files2.chmodReadOnly(catalinaHome);
+
+        // some frameworks like Grails try to write in ${catalina.home}/logs
+        Path logsDir = Files.createDirectories(catalinaHome.resolve("logs"));
+        Files2.chmodAddReadWrite(logsDir);
+
+        Path workDir = Files.createDirectories(catalinaHome.resolve("work"));
+        Files2.chmodAddReadWrite(workDir);
+
+        Path tempDir = Files.createDirectories(catalinaHome.resolve("temp"));
+        Files2.chmodAddReadWrite(tempDir);
+
+    }
+
+    public Path installCatalinaBase() throws IOException {
+        logger.debug("installCatalinaBase() {}", catalinaBase);
+
+        Files.createDirectories(catalinaBase.resolve("work"));
+
+        Files.createDirectories(catalinaBase.resolve("logs"));
+
+        // WEB APP
+        Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
+        Files2.unzip(warFile, rootWebAppDir);
+
+        // CONFIGURATION FILES
+        Path webAppBundledContextXmlFile = rootWebAppDir.resolve("META-INF/context.xml");
+        Path catalinaBaseContextXml = this.catalinaBase.resolve("conf/context.xml");
+        if (Files.exists(webAppBundledContextXmlFile) && !Files.isDirectory(webAppBundledContextXmlFile)) {
+            logger.info("Copy application provided context.xml");
+            Files.move(catalinaBaseContextXml, catalinaBase.resolve("conf/context-initial.xml"));
+            Files.copy(webAppBundledContextXmlFile, catalinaBaseContextXml);
+        }
+
+        Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
+        Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
+        if (Files.exists(webAppBundledServerXmlFile) && !Files.isDirectory(webAppBundledServerXmlFile)) {
+            logger.info("Copy application provided server.xml");
+            Files.move(catalinaBaseServerXml, catalinaBase.resolve("conf/server-initial.xml"));
+            Files.copy(webAppBundledServerXmlFile, catalinaBaseServerXml);
+        }
+
+        Path webAppBundledExtraFiles = rootWebAppDir.resolve("META-INF/extra-files");
+        if (Files.exists(webAppBundledExtraFiles) && Files.isDirectory(webAppBundledExtraFiles)) {
+            logger.info("Copy application provided extra files");
+            Files2.copyDirectoryContent(webAppBundledExtraFiles, this.appExtraFilesDir);
+        }
+
+        Path webAppBundledExtraLibs = rootWebAppDir.resolve("META-INF/lib");
+        if (Files.exists(webAppBundledExtraLibs) && Files.isDirectory(webAppBundledExtraLibs)) {
+            logger.info("Copy application provided extra libs");
+            Files2.copyDirectoryContent(webAppBundledExtraLibs, this.catalinaBase.resolve("lib"));
+        }
+
+        // LIBRARIES
+
         Path targetLibDir = Files.createDirectories(catalinaBase.resolve("lib"));
         Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
 
@@ -229,46 +285,6 @@ public class Setup {
             Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-memcache"), targetLibDir);
         }
 
-        Files2.chmodReadOnly(catalinaHome);
-    }
-
-    public Path installCatalinaBase() throws IOException {
-        logger.debug("installCatalinaBase() {}", catalinaBase);
-
-        Files.createDirectories(catalinaBase.resolve("work"));
-
-        Files.createDirectories(catalinaBase.resolve("logs"));
-
-        Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
-        Files2.unzip(warFile, rootWebAppDir);
-
-        Path webAppBundledContextXmlFile = rootWebAppDir.resolve("META-INF/context.xml");
-        Path catalinaBaseContextXml = this.catalinaBase.resolve("conf/context.xml");
-        if (Files.exists(webAppBundledContextXmlFile) && !Files.isDirectory(webAppBundledContextXmlFile)) {
-            logger.info("Copy application provided context.xml");
-            Files.move(catalinaBaseContextXml, catalinaBase.resolve("conf/context-initial.xml"));
-            Files.copy(webAppBundledContextXmlFile, catalinaBaseContextXml);
-        }
-
-        Path webAppBundledServerXmlFile = rootWebAppDir.resolve("META-INF/server.xml");
-        Path catalinaBaseServerXml = this.catalinaBase.resolve("conf/server.xml");
-        if (Files.exists(webAppBundledServerXmlFile) && !Files.isDirectory(webAppBundledServerXmlFile)) {
-            logger.info("Copy application provided server.xml");
-            Files.move(catalinaBaseServerXml, catalinaBase.resolve("conf/server-initial.xml"));
-            Files.copy(webAppBundledServerXmlFile, catalinaBaseServerXml);
-        }
-
-        Path webAppBundledExtraFiles = rootWebAppDir.resolve("META-INF/extra-files");
-        if (Files.exists(webAppBundledExtraFiles) && Files.isDirectory(webAppBundledExtraFiles)) {
-            logger.info("Copy application provided extra files");
-            Files2.copyDirectoryContent(webAppBundledExtraFiles, this.appExtraFilesDir);
-        }
-
-        Path webAppBundledExtraLibs = rootWebAppDir.resolve("META-INF/lib");
-        if (Files.exists(webAppBundledExtraLibs) && Files.isDirectory(webAppBundledExtraLibs)) {
-            logger.info("Copy application provided extra libs");
-            Files2.copyDirectoryContent(webAppBundledExtraLibs, this.catalinaBase.resolve("lib"));
-        }
 
         Files2.chmodAddReadWrite(catalinaBase);
 
