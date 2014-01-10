@@ -225,6 +225,7 @@ public class SetupTomcatConfigurationFilesTest {
                 "    'username': 'my_acount', \n" +
                 "    'password': '09876543', \n" +
                 "    'transcoderFactoryClass': 'de.javakaffee.web.msm.JavaSerializationTranscoderFactory', \n" +
+                "    'region': 'us', \n" +
                 "    '__resource_name__': 'memcache-session-store', \n" +
                 "    '__resource_type__': 'session-store' \n" +
                 "}\n" +

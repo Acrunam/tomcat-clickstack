@@ -132,7 +132,7 @@ public class SetupTomcatConfigurationFiles {
         e.setAttribute("username", store.getUsername());
         e.setAttribute("password", store.getPassword());
 
-        Set<String> excludedParameters = Sets.newHashSet("servers", "username", "password", "__resource_name__", "__resource_type__");
+        Set<String> excludedParameters = Sets.newHashSet("servers", "username", "password", "region", "__resource_name__", "__resource_type__");
         for (Map.Entry<String, String> entry : store.getProperties().entrySet()) {
             if (!excludedParameters.contains(entry.getKey())) {
                 e.setAttribute(entry.getKey(), entry.getValue());
