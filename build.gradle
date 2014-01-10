@@ -62,8 +62,8 @@ dependencies {
     clickStackRuntimeMail 'javax.mail:mail:1.4.7'
     // we need couchbase-client as we store in membase
     // https://code.google.com/p/memcached-session-manager/wiki/SetupAndConfiguration
-    clickStackRuntimeMemcache 'de.javakaffee.msm:memcached-session-manager-tc7:1.6.5'
-    clickStackRuntimeMemcache 'de.javakaffee.msm:msm-kryo-serializer:1.6.5'
+    clickStackRuntimeMemcache 'de.javakaffee.msm:memcached-session-manager-tc7:1.7.0'
+    clickStackRuntimeMemcache 'de.javakaffee.msm:msm-kryo-serializer:1.7.0'
 }
 
 jar {
