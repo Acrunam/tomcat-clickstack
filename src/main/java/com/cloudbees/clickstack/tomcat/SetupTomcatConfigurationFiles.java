@@ -5,6 +5,7 @@ import com.cloudbees.clickstack.util.Strings2;
 import com.cloudbees.clickstack.util.XmlUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileOutputStream;
@@ -119,15 +121,34 @@ public class SetupTomcatConfigurationFiles {
         return this;
     }
 
+    @Nullable
+    protected Resource getResourceByType(@Nonnull Metadata metadata, @Nullable final String type) {
+
+        Collection<Resource> matchingResources = Collections2.filter(metadata.getResources().values(), new Predicate<Resource>() {
+            @Override
+            public boolean apply(@Nullable Resource r) {
+                return Objects.equals(type, r.getType());
+            }
+        });
+
+        Preconditions.checkState(matchingResources.size() <= 1, "More than 1 resource with type='%s': %s", type, matchingResources);
+
+        return Iterables.getFirst(matchingResources, null);
+    }
+
     protected SetupTomcatConfigurationFiles addSessionStore(SessionStore store, Document serverDocument, Document contextXmlDocument, Metadata metadata) {
         logger.info("Add Memcache SessionStore");
+
+        Resource applicationResource = getResourceByType(metadata, "application");
+        boolean stickySessionDefaultValue = applicationResource == null ? false : Boolean.valueOf(applicationResource.getProperty("stickySession", "false"));
+
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
         e.setAttribute("transcoderFactoryClass", "de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory");
         e.setAttribute("memcachedProtocol", "binary");
         e.setAttribute("requestUriIgnorePattern", ".*\\.(ico|png|gif|jpg|css|js)$");
         e.setAttribute("sessionBackupAsync", "false");
-        e.setAttribute("sticky", "false");
+        e.setAttribute("sticky", String.valueOf(stickySessionDefaultValue));
         e.setAttribute("memcachedNodes", store.getNodes());
         e.setAttribute("username", store.getUsername());
         e.setAttribute("password", store.getPassword());
@@ -252,7 +273,7 @@ public class SetupTomcatConfigurationFiles {
         addPrivateAppValve(metadata, serverXmlDocument, contextXmlDocument);
         addRemoteAddrValve(metadata, serverXmlDocument, contextXmlDocument);
         addSyslogAccessLogValve(metadata, serverXmlDocument, contextXmlDocument);
-        updateConnectorConfiguration(metadata,serverXmlDocument);
+        updateConnectorConfiguration(metadata, serverXmlDocument);
     }
 
     public void buildTomcatConfigurationFiles(Path catalinaBase) throws Exception {
