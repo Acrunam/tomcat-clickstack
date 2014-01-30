@@ -28,7 +28,14 @@
         "__resource_name__": "mydb", 
         "__resource_type__": "database", 
         "max-pool-size": "10"
-    }, 
+    },
+    "cyrille-leclerc_www": {
+        "__resource_name__": "cyrille-leclerc/www",
+        "__resource_type__": "application",
+        "http_version": "1.1",
+        "security_mode": "PUBLIC",
+        "stickySession": "false"
+    },
     "java": {
         "opts": "-Duser.timezone=GMT -Dfile.encoding=UTF-8 -Dtest5.opt1=value1 -Xmx128M", 
         "version": "1.7"

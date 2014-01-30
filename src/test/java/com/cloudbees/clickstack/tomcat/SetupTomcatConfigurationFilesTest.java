@@ -20,12 +20,15 @@ import com.cloudbees.clickstack.util.XmlUtils;
 import com.cloudbees.clickstack.domain.metadata.Database;
 import com.cloudbees.clickstack.domain.metadata.Email;
 import com.cloudbees.clickstack.domain.metadata.SessionStore;
+import com.google.common.io.Files;
 import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
 
 import static org.junit.Assert.assertThat;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
@@ -134,29 +137,18 @@ public class SetupTomcatConfigurationFilesTest {
     @Test
     public void add_data_source_success_basic_config() throws Exception {
 
-        // prepare
+
+        String bindingName = "mydb";
+
         String json = "{ \n" +
                 "'cb-db': { \n" +
                 "    'DATABASE_PASSWORD': 'test', \n" +
                 "    'DATABASE_URL': 'mysql://mysql.mycompany.com:3306/test', \n" +
                 "    'DATABASE_USERNAME': 'test', \n" +
-                "    '__resource_name__': 'mydb', \n" +
+                "    '__resource_name__': '" + bindingName + "', \n" +
                 "    '__resource_type__': 'database' \n" +
                 "}\n" +
                 "}";
-        Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
-
-        Database database = metadata.getResource("mydb");
-
-        // run
-        setupTomcatConfigurationFiles.addDatabase(database, serverXml, contextXml);
-
-        // XmlUtils.flush(contextXml, System.out);
-
-        // verify
-        Element dataSource = XmlUtils.getUniqueElement(contextXml, "//Resource[@name='jdbc/mydb']");
-
         String xml = "" +
                 "<Resource auth='Container' \n" +
                 "   driverClassName='com.mysql.jdbc.Driver' \n" +
@@ -164,7 +156,7 @@ public class SetupTomcatConfigurationFilesTest {
                 "   maxActive='20' \n" +
                 "   maxIdle='10' \n" +
                 "   minIdle='1' \n" +
-                "   name='jdbc/mydb' \n" +
+                "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
                 "   testOnBorrow='true' \n" +
                 "   testWhileIdle='true' \n" +
@@ -173,6 +165,32 @@ public class SetupTomcatConfigurationFilesTest {
                 "   username='test' \n" +
                 "   validationInterval='5000' \n" +
                 "   validationQuery='select 1'/>";
+
+        test_add_datasource(bindingName, json, xml);
+    }
+
+    private void test_add_datasource(String bindingName, String json, String xml) throws IOException {
+
+        File tempDir = Files.createTempDir();
+        try {
+
+
+        } finally {
+            // todo delete
+        }
+        Metadata metadata = Metadata.Builder.fromJsonString(json, true);
+        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
+
+        Database database = metadata.getResource(bindingName);
+
+        // run
+        setupTomcatConfigurationFiles.addDatabase(database, serverXml, contextXml);
+
+        // XmlUtils.flush(contextXml, System.out);
+
+        // verify
+        Element dataSource = XmlUtils.getUniqueElement(contextXml, "//Resource[@name='jdbc/" + bindingName + "']");
+
         assertThat(the(dataSource), isEquivalentTo(the(xml)));
     }
 
@@ -189,6 +207,22 @@ public class SetupTomcatConfigurationFilesTest {
                 "    '__resource_type__': 'session-store' \n" +
                 "}\n" +
                 "}";
+
+        String xml = "" +
+                "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
+                "   memcachedNodes='http://memcache1.mycompany.com:8091/pools,http://server2.mycompany.com:8091/pools' \n" +
+                "   memcachedProtocol='binary' \n" +
+                "   password='09876543' \n" +
+                "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
+                "   sessionBackupAsync='false' \n" +
+                "   sticky='false' \n" +
+                "   transcoderFactoryClass='de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory' \n" +
+                "   username='my_acount' />";
+
+        add_session_store(json, xml);
+    }
+
+    private void add_session_store(String json, String xml) throws IOException {
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
         SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
@@ -202,16 +236,6 @@ public class SetupTomcatConfigurationFilesTest {
         // verify
         Element sessionManager = XmlUtils.getUniqueElement(contextXml, "//Manager");
 
-        String xml = "" +
-                "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
-                "   memcachedNodes='http://memcache1.mycompany.com:8091/pools,http://server2.mycompany.com:8091/pools' \n" +
-                "   memcachedProtocol='binary' \n" +
-                "   password='09876543' \n" +
-                "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
-                "   sessionBackupAsync='false' \n" +
-                "   sticky='false' \n" +
-                "   transcoderFactoryClass='de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory' \n" +
-                "   username='my_acount' />";
         assertThat(the(sessionManager), isEquivalentTo(the(xml)));
     }
 
@@ -230,18 +254,6 @@ public class SetupTomcatConfigurationFilesTest {
                 "    '__resource_type__': 'session-store' \n" +
                 "}\n" +
                 "}";
-        Metadata metadata = Metadata.Builder.fromJsonString(json, true);
-        SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
-
-        SessionStore sessionStore = metadata.getResource("memcache-session-store");
-
-        // run
-        setupTomcatConfigurationFiles.addSessionStore(sessionStore, serverXml, contextXml, metadata);
-
-        // XmlUtils.flush(contextXml, System.out);
-
-        // verify
-        Element sessionManager = XmlUtils.getUniqueElement(contextXml, "//Manager");
 
         String xml = "" +
                 "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
@@ -253,9 +265,76 @@ public class SetupTomcatConfigurationFilesTest {
                 "   sticky='false' \n" +
                 "   transcoderFactoryClass='de.javakaffee.web.msm.JavaSerializationTranscoderFactory' \n" +
                 "   username='my_acount' />";
-        assertThat(the(sessionManager), isEquivalentTo(the(xml)));
+        add_session_store(json, xml);
     }
 
+    @Test
+    public void add_session_store_default_sticky_session_true() throws Exception {
+
+        // prepare
+        String json = "{ \n" +
+                "'my-account_myapp': { \n" +
+                "    'stickySession': 'true', \n" +
+                "    '__resource_name__': 'my-account/myapp', \n" +
+                "    '__resource_type__': 'application' \n" +
+                "},\n" +
+                "'memcache-session-store': { \n" +
+                "    'servers': 'memcache1.mycompany.com,server2.mycompany.com', \n" +
+                "    'username': 'my_acount', \n" +
+                "    'password': '09876543', \n" +
+                "    'transcoderFactoryClass': 'de.javakaffee.web.msm.JavaSerializationTranscoderFactory', \n" +
+                "    'region': 'us', \n" +
+                "    '__resource_name__': 'memcache-session-store', \n" +
+                "    '__resource_type__': 'session-store' \n" +
+                "}\n" +
+                "}";
+
+        String xml = "" +
+                "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
+                "   memcachedNodes='http://memcache1.mycompany.com:8091/pools,http://server2.mycompany.com:8091/pools' \n" +
+                "   memcachedProtocol='binary' \n" +
+                "   password='09876543' \n" +
+                "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
+                "   sessionBackupAsync='false' \n" +
+                "   sticky='true' \n" +
+                "   transcoderFactoryClass='de.javakaffee.web.msm.JavaSerializationTranscoderFactory' \n" +
+                "   username='my_acount' />";
+        add_session_store(json, xml);
+    }
+
+    @Test
+    public void add_session_store_default_sticky_session_false() throws Exception {
+
+        // prepare
+        String json = "{ \n" +
+                "'my-account_myapp': { \n" +
+                "    'stickySession': 'false', \n" +
+                "    '__resource_name__': 'my-account/myapp', \n" +
+                "    '__resource_type__': 'application' \n" +
+                "},\n" +
+                "'memcache-session-store': { \n" +
+                "    'servers': 'memcache1.mycompany.com,server2.mycompany.com', \n" +
+                "    'username': 'my_acount', \n" +
+                "    'password': '09876543', \n" +
+                "    'transcoderFactoryClass': 'de.javakaffee.web.msm.JavaSerializationTranscoderFactory', \n" +
+                "    'region': 'us', \n" +
+                "    '__resource_name__': 'memcache-session-store', \n" +
+                "    '__resource_type__': 'session-store' \n" +
+                "}\n" +
+                "}";
+
+        String xml = "" +
+                "<Manager className='de.javakaffee.web.msm.MemcachedBackupSessionManager' \n" +
+                "   memcachedNodes='http://memcache1.mycompany.com:8091/pools,http://server2.mycompany.com:8091/pools' \n" +
+                "   memcachedProtocol='binary' \n" +
+                "   password='09876543' \n" +
+                "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
+                "   sessionBackupAsync='false' \n" +
+                "   sticky='false' \n" +
+                "   transcoderFactoryClass='de.javakaffee.web.msm.JavaSerializationTranscoderFactory' \n" +
+                "   username='my_acount' />";
+        add_session_store(json, xml);
+    }
 
     @Test
     public void add_mail_session_success_basic_config() throws IOException {
