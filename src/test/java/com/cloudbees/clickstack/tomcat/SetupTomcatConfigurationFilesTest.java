@@ -295,7 +295,7 @@ public class SetupTomcatConfigurationFilesTest {
                 "   memcachedProtocol='binary' \n" +
                 "   password='09876543' \n" +
                 "   requestUriIgnorePattern='.*\\.(ico|png|gif|jpg|css|js)$' \n" +
-                "   sessionBackupAsync='false' \n" +
+                "   sessionBackupAsync='true' \n" +
                 "   sticky='true' \n" +
                 "   transcoderFactoryClass='de.javakaffee.web.msm.JavaSerializationTranscoderFactory' \n" +
                 "   username='my_acount' />";
