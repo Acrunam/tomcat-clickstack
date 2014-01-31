@@ -141,13 +141,14 @@ public class SetupTomcatConfigurationFiles {
 
         Resource applicationResource = getResourceByType(metadata, "application");
         boolean stickySessionDefaultValue = applicationResource == null ? false : Boolean.valueOf(applicationResource.getProperty("stickySession", "false"));
+        boolean sessionBackupAsyncDefaultValue = stickySessionDefaultValue;
 
         Element e = contextXmlDocument.createElement("Manager");
         e.setAttribute("className", "de.javakaffee.web.msm.MemcachedBackupSessionManager");
         e.setAttribute("transcoderFactoryClass", "de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory");
         e.setAttribute("memcachedProtocol", "binary");
         e.setAttribute("requestUriIgnorePattern", ".*\\.(ico|png|gif|jpg|css|js)$");
-        e.setAttribute("sessionBackupAsync", "false");
+        e.setAttribute("sessionBackupAsync", String.valueOf(sessionBackupAsyncDefaultValue));
         e.setAttribute("sticky", String.valueOf(stickySessionDefaultValue));
         e.setAttribute("memcachedNodes", store.getNodes());
         e.setAttribute("username", store.getUsername());
