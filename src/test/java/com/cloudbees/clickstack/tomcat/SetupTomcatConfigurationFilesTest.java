@@ -135,7 +135,7 @@ public class SetupTomcatConfigurationFilesTest {
     }
 
     @Test
-    public void add_data_source_success_basic_config() throws Exception {
+    public void add_mysql_data_source() throws Exception {
 
 
         String bindingName = "mydb";
@@ -153,6 +153,7 @@ public class SetupTomcatConfigurationFilesTest {
                 "<Resource auth='Container' \n" +
                 "   driverClassName='com.mysql.jdbc.Driver' \n" +
                 "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
+                "   initialSize='1' \n" +
                 "   maxActive='20' \n" +
                 "   maxIdle='10' \n" +
                 "   minIdle='1' \n" +
@@ -169,15 +170,80 @@ public class SetupTomcatConfigurationFilesTest {
         test_add_datasource(bindingName, json, xml);
     }
 
+    @Test
+    public void add_elephantsql_postgresql_data_source() throws Exception {
+
+
+        String bindingName = "mydb";
+
+        String json = "{ \n" +
+                "'cb-db': { \n" +
+                "    'DATABASE_PASSWORD': 'test', \n" +
+                "    'DATABASE_URL': 'postgresql://babar.elephantsql.com:5432/test', \n" +
+                "    'DATABASE_USERNAME': 'test', \n" +
+                "    '__resource_name__': '" + bindingName + "', \n" +
+                "    '__resource_type__': 'database' \n" +
+                "}\n" +
+                "}";
+        String xml = "" +
+                "<Resource auth='Container' \n" +
+                "   driverClassName='org.postgresql.Driver' \n" +
+                "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
+                "   initialSize='1' \n" +
+                "   maxActive='4' \n" +
+                "   maxIdle='2' \n" +
+                "   minIdle='1' \n" +
+                "   name='jdbc/" + bindingName + "' \n" +
+                "   password='test' \n" +
+                "   testOnBorrow='true' \n" +
+                "   testWhileIdle='true' \n" +
+                "   type='javax.sql.DataSource' \n" +
+                "   url='jdbc:postgresql://babar.elephantsql.com:5432/test' \n" +
+                "   username='test' \n" +
+                "   validationInterval='5000' \n" +
+                "   validationQuery='select version();'/>";
+
+        test_add_datasource(bindingName, json, xml);
+    }
+
+    @Test
+    public void add_elephantsql_postgresql_data_source_with_max_active_1() throws Exception {
+
+
+        String bindingName = "mydb";
+
+        String json = "{ \n" +
+                "'cb-db': { \n" +
+                "    'DATABASE_PASSWORD': 'test', \n" +
+                "    'DATABASE_URL': 'postgresql://babar.elephantsql.com:5432/test', \n" +
+                "    'DATABASE_USERNAME': 'test', \n" +
+                "    '__resource_name__': '" + bindingName + "', \n" +
+                "    '__resource_type__': 'database', \n" +
+                "    'maxActive': '1' \n" +
+                "}\n" +
+                "}";
+        String xml = "" +
+                "<Resource auth='Container' \n" +
+                "   driverClassName='org.postgresql.Driver' \n" +
+                "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
+                "   initialSize='1' \n" +
+                "   maxActive='1' \n" +
+                "   maxIdle='2' \n" +
+                "   minIdle='1' \n" +
+                "   name='jdbc/" + bindingName + "' \n" +
+                "   password='test' \n" +
+                "   testOnBorrow='true' \n" +
+                "   testWhileIdle='true' \n" +
+                "   type='javax.sql.DataSource' \n" +
+                "   url='jdbc:postgresql://babar.elephantsql.com:5432/test' \n" +
+                "   username='test' \n" +
+                "   validationInterval='5000' \n" +
+                "   validationQuery='select version();'/>";
+
+        test_add_datasource(bindingName, json, xml);
+    }
+
     private void test_add_datasource(String bindingName, String json, String xml) throws IOException {
-
-        File tempDir = Files.createTempDir();
-        try {
-
-
-        } finally {
-            // todo delete
-        }
         Metadata metadata = Metadata.Builder.fromJsonString(json, true);
         SetupTomcatConfigurationFiles setupTomcatConfigurationFiles = new SetupTomcatConfigurationFiles(metadata);
 
