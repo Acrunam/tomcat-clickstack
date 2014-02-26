@@ -249,7 +249,7 @@ public class Setup {
         // LIBRARIES
 
         Path targetLibDir = Files.createDirectories(catalinaBase.resolve("lib"));
-        Files2.copyArtifactToDirectory(clickstackDir.resolve("deps/tomcat-lib"), "cloudbees-web-container-extras", targetLibDir);
+        Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib"), targetLibDir);
 
         // JDBC Drivers
         Collection<Database> mysqlDatabases = Collections2.filter(metadata.getResources(Database.class), new Predicate<Database>() {
