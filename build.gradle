@@ -64,12 +64,6 @@ dependencies {
     clickStackRuntime 'commons-httpclient:commons-httpclient:3.1'
     clickStackRuntime 'commons-logging:commons-logging:1.1.1'
     clickStackRuntime 'commons-codec:commons-codec:1.3'
-    clickStackRuntime 'org.slf4j:slf4j-api:1.7.5'
-    clickStackRuntime 'org.slf4j:slf4j-log4j12:1.7.5'
-    clickStackRuntime 'log4j:log4j:1.2.14'
-    clickStackRuntimePostgresql 'org.postgresql:postgresql:9.3-1100-jdbc41'
-    clickStackRuntimeMySql 'mysql:mysql-connector-java:5.1.28'
-    clickStackRuntimeMail 'javax.mail:mail:1.4.7'
     // we need couchbase-client as we store in membase
     // https://code.google.com/p/memcached-session-manager/wiki/SetupAndConfiguration
     clickStackRuntimeMemcache "de.javakaffee.msm:$memcachedSessionManagerArtifact:1.8.1"
