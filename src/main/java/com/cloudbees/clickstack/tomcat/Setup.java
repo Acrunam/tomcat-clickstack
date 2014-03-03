@@ -213,8 +213,21 @@ public class Setup {
 
         Files.createDirectories(catalinaBase.resolve("logs"));
 
+        String contextPath = metadata.getRuntimeParameter("webapp", "contextPath", null);
+        if (contextPath == null) {
+            contextPath = "ROOT";
+        } else {
+            if (contextPath.startsWith("/")) {
+                contextPath = contextPath.substring(1);
+            }
+            if(contextPath.isEmpty()) {
+                contextPath = "ROOT";
+            }
+            logger.info("Deploy application under custom contextPath '/{}'", contextPath);
+        }
+
         // WEB APP
-        Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps/ROOT"));
+        Path rootWebAppDir = Files.createDirectories(catalinaBase.resolve("webapps").resolve(contextPath));
         Files2.unzip(warFile, rootWebAppDir);
 
         // CONFIGURATION FILES
