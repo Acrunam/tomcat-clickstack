@@ -154,8 +154,8 @@ public class SetupTomcatConfigurationFilesTest {
                 "   driverClassName='com.mysql.jdbc.Driver' \n" +
                 "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
                 "   initialSize='1' \n" +
-                "   maxActive='20' \n" +
-                "   maxIdle='10' \n" +
+                "   maxActive='19' \n" +
+                "   maxIdle='9' \n" +
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
@@ -190,8 +190,8 @@ public class SetupTomcatConfigurationFilesTest {
                 "   driverClassName='org.postgresql.Driver' \n" +
                 "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
                 "   initialSize='1' \n" +
-                "   maxActive='4' \n" +
-                "   maxIdle='2' \n" +
+                "   maxActive='3' \n" +
+                "   maxIdle='1' \n" +
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
@@ -228,7 +228,7 @@ public class SetupTomcatConfigurationFilesTest {
                 "   factory='org.apache.tomcat.jdbc.pool.DataSourceFactory' \n" +
                 "   initialSize='1' \n" +
                 "   maxActive='1' \n" +
-                "   maxIdle='2' \n" +
+                "   maxIdle='1' \n" +
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
