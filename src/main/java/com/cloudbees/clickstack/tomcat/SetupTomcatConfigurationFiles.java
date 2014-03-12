@@ -57,10 +57,7 @@ public class SetupTomcatConfigurationFiles {
         // by default, use use tomcat-jdbc-pool
         e.setAttribute("factory", "org.apache.tomcat.jdbc.pool.DataSourceFactory");
 
-        // by default max to 4 cx for elephantsql (because the free plan is 4 cx) and to 20 cx otherwise (because CloudBees MySQL max is 20)
-        // the max 4 is suboptimal for paying elephantsql plans be we currently can not retrieve an hint on the database limit
-        boolean isElephantSqlDatabase = database.getUrl().contains("elephantsql.com");
-        int maxActive = isElephantSqlDatabase ? 4 : 20;
+        int maxActive = database.getMaxConnections();
         int maxIdle = Math.max(maxActive / 2, 1);
         e.setAttribute("maxActive", String.valueOf(maxActive));
         e.setAttribute("maxIdle", String.valueOf(maxIdle));
