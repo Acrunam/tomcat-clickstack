@@ -264,34 +264,6 @@ public class Setup {
         Path targetLibDir = Files.createDirectories(catalinaBase.resolve("lib"));
         Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib"), targetLibDir);
 
-        // JDBC Drivers
-        Collection<Database> mysqlDatabases = Collections2.filter(metadata.getResources(Database.class), new Predicate<Database>() {
-            @Override
-            public boolean apply(@Nullable Database database) {
-                return Database.DRIVER_MYSQL.equals(database.getDriver());
-            }
-        });
-        if (!mysqlDatabases.isEmpty()) {
-            logger.debug("Add mysql jars");
-            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mysql"), targetLibDir);
-        }
-
-        Collection<Database> postgresqlDatabases = Collections2.filter(metadata.getResources(Database.class), new Predicate<Database>() {
-            @Override
-            public boolean apply(@Nullable Database database) {
-                return Database.DRIVER_POSTGRES.equals(database.getDriver());
-            }
-        });
-        if (!postgresqlDatabases.isEmpty()) {
-            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-postgresql"), targetLibDir);
-        }
-
-        // Mail
-        if (!metadata.getResources(Email.class).isEmpty()) {
-            logger.debug("Add mail jars");
-            Files2.copyDirectoryContent(clickstackDir.resolve("deps/tomcat-lib-mail"), targetLibDir);
-        }
-
         // Memcache
         if (!metadata.getResources(SessionStore.class).isEmpty()) {
             logger.debug("Add memcache jars");

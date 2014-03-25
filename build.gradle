@@ -26,9 +26,6 @@ configurations {
     clickStackRuntimeJavaAgent.ext.clickStackFolder = "deps/javaagent-lib"
 
     clickStackRuntime.ext.clickStackFolder = "deps/tomcat-lib"
-    clickStackRuntimePostgresql.ext.clickStackFolder = "deps/tomcat-lib-postgresql"
-    clickStackRuntimeMySql.ext.clickStackFolder = "deps/tomcat-lib-mysql"
-    clickStackRuntimeMail.ext.clickStackFolder = "deps/tomcat-lib-mail"
     clickStackRuntimeMemcache.ext.clickStackFolder = "deps/tomcat-lib-memcache"
 
     clickStackControl.ext.clickStackFolder = "deps/control-lib"
