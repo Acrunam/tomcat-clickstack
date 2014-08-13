@@ -159,12 +159,12 @@ public class SetupTomcatConfigurationFilesTest {
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
-                "   testOnBorrow='true' \n" +
+                "   testOnBorrow='false' \n" +
                 "   testWhileIdle='true' \n" +
                 "   type='javax.sql.DataSource' \n" +
                 "   url='jdbc:mysql://mysql.mycompany.com:3306/test' \n" +
                 "   username='test' \n" +
-                "   validationInterval='30000' \n" +
+                "   validationInterval='60000' \n" +
                 "   validationQuery='select 1'/>";
 
         test_add_datasource(bindingName, json, xml);
@@ -195,12 +195,12 @@ public class SetupTomcatConfigurationFilesTest {
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
-                "   testOnBorrow='true' \n" +
+                "   testOnBorrow='false' \n" +
                 "   testWhileIdle='true' \n" +
                 "   type='javax.sql.DataSource' \n" +
                 "   url='jdbc:postgresql://babar.elephantsql.com:5432/test' \n" +
                 "   username='test' \n" +
-                "   validationInterval='30000' \n" +
+                "   validationInterval='60000' \n" +
                 "   validationQuery='select version();'/>";
 
         test_add_datasource(bindingName, json, xml);
@@ -232,12 +232,12 @@ public class SetupTomcatConfigurationFilesTest {
                 "   minIdle='1' \n" +
                 "   name='jdbc/" + bindingName + "' \n" +
                 "   password='test' \n" +
-                "   testOnBorrow='true' \n" +
+                "   testOnBorrow='false' \n" +
                 "   testWhileIdle='true' \n" +
                 "   type='javax.sql.DataSource' \n" +
                 "   url='jdbc:postgresql://babar.elephantsql.com:5432/test' \n" +
                 "   username='test' \n" +
-                "   validationInterval='30000' \n" +
+                "   validationInterval='60000' \n" +
                 "   validationQuery='select version();'/>";
 
         test_add_datasource(bindingName, json, xml);
