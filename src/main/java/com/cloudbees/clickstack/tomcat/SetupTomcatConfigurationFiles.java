@@ -65,10 +65,10 @@ public class SetupTomcatConfigurationFiles {
         e.setAttribute("initialSize", "1");
 
         // test on borrow and while idle to release idle connections
-        e.setAttribute("testOnBorrow", "true");
+        e.setAttribute("testOnBorrow", "false");
         e.setAttribute("testWhileIdle", "true");
         e.setAttribute("validationQuery", database.getValidationQuery());
-        e.setAttribute("validationInterval", "30000"); // 30 secs
+        e.setAttribute("validationInterval", "60000"); // 60 secs
 
         // all the parameters can be overwritten
         for (Map.Entry<String, String> entry : database.getProperties().entrySet()) {
